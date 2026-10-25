@@ -1,10 +1,11 @@
 /* Compra Mayorista: funciona sin conexión.
    - La app (index) se pide primero a internet y, si no hay señal, sale de la copia guardada.
-   - Íconos y fuentes se guardan al usarlos. */
-var CACHE = 'compra-mayorista-v4';
+   - El manifest y los íconos también se piden primero a internet (así el nombre y el ícono siempre se actualizan).
+   - Fuentes se guardan al usarlas. */
+var CACHE = 'compra-mayorista-v5';
 var BASE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './maskable-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(BASE); }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(caches.open(CACHE).then(function (c) { return Promise.all(BASE.map(function (u) { return c.add(new Request(u, { cache: 'reload' })); })); }).then(function () { return self.skipWaiting(); }));
 });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (ks) {
@@ -15,6 +16,14 @@ self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
+  var isMeta = url.origin === location.origin && /\.(webmanifest|png)$/.test(url.pathname);
+  if (isMeta) {
+    e.respondWith(fetch(req, { cache: 'reload' }).then(function (r) {
+      if (r && r.status === 200) { var copy = r.clone(); caches.open(CACHE).then(function (c) { c.put(req, copy); }); }
+      return r;
+    }).catch(function () { return caches.match(req); }));
+    return;
+  }
   var isPage = req.mode === 'navigate' || (url.origin === location.origin && /(\/|index\.html)$/.test(url.pathname));
   if (isPage) {
     e.respondWith(fetch(req).then(function (r) {
