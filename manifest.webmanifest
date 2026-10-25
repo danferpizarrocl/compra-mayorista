@@ -1,6 +1,6 @@
 {
   "name": "Compra Mayorista",
-  "short_name": "Compra",
+  "short_name": "Mayorista",
   "description": "Arma tu compra mayorista, controla el monto y compara precios con tus compras anteriores.",
   "lang": "es",
   "start_url": "./",
