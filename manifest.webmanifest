@@ -1,7 +1,7 @@
 {
   "id": "/compra-mayorista/",
   "name": "Compra Mayorista",
-  "short_name": "Mayorista",
+  "short_name": "Mi Super",
   "description": "Arma tu compra mayorista, controla el monto y compara precios con tus compras anteriores.",
   "lang": "es-CL",
   "start_url": "./",
