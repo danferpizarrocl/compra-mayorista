@@ -1,7 +1,7 @@
 /* Compra Mayorista: funciona sin conexión.
    - La app (index) se pide primero a internet y, si no hay señal, sale de la copia guardada.
    - Íconos y fuentes se guardan al usarlos. */
-var CACHE = 'compra-mayorista-v2';
+var CACHE = 'compra-mayorista-v3';
 var BASE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './maskable-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(BASE); }).then(function () { return self.skipWaiting(); }));
