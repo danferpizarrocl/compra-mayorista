@@ -209,7 +209,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;letter-spacing:-.01em}
 .hist .hd b{display:block}.hist .hd em{font-style:normal;color:var(--muted);font-size:12.5px}
 .hist .am{font-family:var(--f-display);font-weight:700;color:var(--accent);white-space:nowrap}
 .tag{font-size:10.5px;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:2px 7px;margin-left:6px;font-weight:700;vertical-align:middle}
-.rkmore{display:block;width:100%;margin:6px 0 0;padding:8px;border:0;border-radius:12px;background:var(--surface2);color:var(--muted);font-size:18px;line-height:1;cursor:pointer}.rkrow[hidden]{display:none}
+.rkmore{display:block;width:100%;margin:6px 0 0;padding:8px;border:0;border-radius:12px;background:var(--surface2);color:var(--muted);font-size:18px;line-height:1;cursor:pointer}.rkrow[hidden]{display:none}.rkmore[aria-expanded=true]{position:sticky;bottom:calc(78px + env(safe-area-inset-bottom,0px));width:54px;margin:10px auto 0;border:1px solid var(--line);background:var(--surface);color:var(--accent);box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:5}
 .warn{font-size:12px;color:var(--bad);margin-top:3px}
 .paidbox{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}.paidbox .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.paidbox .row:first-child{margin-top:0}.paidbox input{width:150px;text-align:right;font-weight:800}.paidbox small{display:block;margin-top:8px;color:var(--muted);font-size:12px}.sdl{color:var(--lvy);font-weight:700}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -1178,7 +1178,7 @@ var A={
  bkx:function(){S.bkInXlsx=!S.bkInXlsx;save();renderExport()},
  xlrestore:function(){openOv('<div class="sh-hd"><h3>¿Restaurar desde el Excel?</h3></div><p class="note" style="margin:0">Reemplaza <b>todo</b> lo que hay hoy en la app (productos, compras guardadas y ajustes) por lo que trae el respaldo del archivo.</p><div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn d" data-a="xlrestoreok">Sí, restaurar</button></div>',true)},
  xlrestoreok:function(){try{var o=JSON.parse(BKX);if(!o||!o.items||(o.v!==1&&o.v!==2))throw new Error('Respaldo no válido');S=migrate(o);LM=AL=null;save();applyTheme();closeOv();render();toast('Respaldo restaurado')}catch(err){toast('No pude restaurar: '+(err.message||'respaldo dañado'))}},
- rkx:function(){RKX=!RKX;$('#rkbox').innerHTML=rankBox()},
+ rkx:function(){var was=RKX;RKX=!RKX;$('#rkbox').innerHTML=rankBox();if(was){var y=$('#rkbox').getBoundingClientRect().top+window.scrollY-70;if(window.scrollY>y)window.scrollTo(0,Math.max(0,y))}},
  rk:function(t){RK=t.dataset.k;$('#rkbox').innerHTML=rankBox()},
  hf:function(t){HF=t.dataset.t;CHSEL=-1;renderHist()},
  bar:function(t){CHSEL=CHSEL===t.dataset.id?-1:t.dataset.id;var cs=$('#chs'),x=cs?cs.scrollLeft:0;$('#chartbox').innerHTML=chartHTML();var n=$('#chs');if(n)n.scrollLeft=x},
