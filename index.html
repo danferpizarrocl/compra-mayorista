@@ -292,7 +292,6 @@ td.red{color:var(--bad)}
   <header class="top">
     <div style="min-width:0"><h1>Compra Mayorista</h1><p class="sub" id="sub"></p></div>
     <div class="top-btns">
-      <button class="ib" data-a="fs" id="btn-fs" aria-label="Pantalla completa"></button>
       <button class="ib" data-a="theme" id="btn-theme" aria-label="Cambiar tema"></button>
       <button class="ib" data-a="edit" id="btn-edit" aria-label="Editar monto" aria-pressed="false"></button>
       <button class="ib" data-a="settings" id="btn-set" aria-label="Configuración"></button>
@@ -402,7 +401,7 @@ function chg(price,last){if(!last||!(price>0))return null;var d=price-last.p;if(
 function isDark(){return S.theme==='dark'}
 function applyTheme(){var r=document.documentElement;r.setAttribute('data-theme',S.theme);$('#btn-theme').innerHTML=ic(isDark()?'sun':'moon')}
 function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement}
-function updFsIcon(){$('#btn-fs').innerHTML=ic(fsEl()?'shrink':'expand')}
+function updFsIcon(){var b=$('#btn-fs');if(b)b.innerHTML=ic(fsEl()?'shrink':'expand')}
 function toggleFs(manual){
   var d=document,el=d.documentElement;
   if(fsEl()){(d.exitFullscreen||d.webkitExitFullscreen).call(d);return}
@@ -415,7 +414,7 @@ function wakeApply(){try{if(S.wake&&navigator.wakeLock&&!WL){navigator.wakeLock.
   else if(!S.wake&&WL){WL.release();WL=null}}catch(e){}}
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')wakeApply()});
 document.addEventListener('fullscreenchange',updFsIcon);document.addEventListener('webkitfullscreenchange',updFsIcon);
-(function(){var done=false;document.addEventListener('click',function(){if(done)return;done=true;if(S.autoFs&&!fsEl())toggleFs(false);wakeApply()},true)})();
+(function(){var done=false;document.addEventListener('click',function(){if(done)return;done=true;wakeApply()},true)})();
 $('#btn-set').innerHTML=ic('gear');$('#btn-edit').innerHTML=ic('edit');
 
 /* ---------- franja y totales ---------- */
@@ -845,7 +844,6 @@ function openSettings(){
   var cards=S.cards.map(function(c){var on=S.hidden.indexOf(c)<0;return tgl('hide" data-c="'+c,on,cn[c])}).join('');
   var h='<div class="sh-hd"><h3>Configuración</h3><button class="ib" data-a="close" aria-label="Cerrar">'+ic('x')+'</button></div>'
   +'<div class="sec" style="margin-top:0">Apariencia</div><div class="seg" role="group">'+th+'</div>'
-  +tgl('autofs',S.autoFs,'Pantalla completa al primer toque','También está el botón de arriba')
   +tgl('wake',S.wake,'Mantener la pantalla encendida','Para que no se apague mientras compras')
   +'<div class="sec">Compras</div>'
   +'<button class="srow" data-a="editnames"><span class="l">Nombres de los carros<small>'+esc(S.names.join(', '))+'</small></span><span>›</span></button>'
