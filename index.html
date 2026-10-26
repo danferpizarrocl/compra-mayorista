@@ -773,8 +773,8 @@ function updCalc(){
   if(SH.boxed)h='<div>'+money(v.price)+' × '+v.units+' unidades = <b>'+money(perBox)+'</b> por caja</div><div>'+money(perBox)+' × '+v.boxes+(v.boxes===1?' caja':' cajas')+'</div>';
   else h='<div>'+money(v.price)+' × '+v.units+' unidades</div>';
   var un=v.units*(SH.boxed?v.boxes:1);
-  h+='<div id="unl"><b>'+(SH.boxed?v.units+' unidades × '+v.boxes+(v.boxes===1?' caja':' cajas')+' = ':'')+grp(un)+(un===1?' unidad':' unidades')+'</b></div>';
-  $('#calc').innerHTML=h+'<div class="tt"><span>Total'+(SH.isNew?'':' '+esc(SH.name.trim()))+'</span><span>'+money(tot)+'</span></div>';
+  $('#calc').innerHTML=h+'<div class="tt"><span>Total'+(SH.isNew?'':' '+esc(SH.name.trim()))+'</span><span>'+money(tot)+'</span></div>'
+   +'<div class="tt" id="unl"><span>Total de unidades'+(SH.boxed?'<small style="display:block;font-weight:400;font-size:12px;color:var(--muted)">'+v.units+' unidades × '+v.boxes+(v.boxes===1?' caja':' cajas')+'</small>':'')+'</span><span>'+grp(un)+'</span></div>';
   $('#f-ok').disabled=!ok;
   var cm=$('#cmp'),ch=SH.id?chg(v.price,lastFor(itemById(SH.id))):null;cm.className='cmp'+(ch?' '+ch.k:'');cm.textContent=ch?ch.t:'';
   var pa=$('#pal');if(pa){var lf=SH.id?lastFor(itemById(SH.id)):null,pc=lf&&v.price>0&&lf.p>0?(v.price-lf.p)/lf.p*100:0,al=lf&&S.alertPct>0&&Math.abs(pc)>=S.alertPct;
