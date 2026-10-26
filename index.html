@@ -1151,7 +1151,7 @@ var A={
  sharego:function(){if(!PEND)return;var f;try{f=new File([PEND.blob],PEND.fn,{type:PEND.blob.type||'application/octet-stream'})}catch(e){f=null}
    var m=$('#share-msg');
    if(!f||!navigator.share||!navigator.canShare||!navigator.canShare({files:[f]})){if(m){m.className='err';m.textContent='Este celular no dejó abrir el menú de compartir. Usa «Guardar en el dispositivo».'}return}
-   navigator.share({files:[f],title:PEND.fn}).then(function(){pendDone('Archivo compartido')}).catch(function(e){if(e&&e.name==='AbortError')return;if(m){m.className='err';m.textContent='No pude abrir el menú de compartir. Usa «Guardar en el dispositivo».'}})},
+   navigator.share({files:[f]}).then(function(){pendDone('Archivo compartido')}).catch(function(e){if(e&&e.name==='AbortError')return;if(m){m.className='err';m.textContent='No pude abrir el menú de compartir ('+((e&&e.name)||'error')+(e&&e.message?': '+String(e.message).slice(0,90):'')+'). Usa «Guardar en el dispositivo».'}})},
  saveto:function(){if(!PEND)return;try{var a=document.createElement('a');a.href=URL.createObjectURL(PEND.blob);a.download=PEND.fn;document.body.appendChild(a);a.click();var u=a.href;setTimeout(function(){URL.revokeObjectURL(u);a.remove()},2000);pendDone('Archivo guardado en Descargas')}catch(e){var m=$('#share-msg');if(m){m.className='err';m.textContent='No pude guardar el archivo.'}}},
  xltog:function(t){var c=$('#'+(t.dataset.c||'xl-hist'));c.checked=!c.checked;t.classList.toggle('off',!c.checked)},
  xlapply:function(){
