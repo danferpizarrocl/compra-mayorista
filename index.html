@@ -1007,11 +1007,10 @@ async function deliver(blob,filename){
 var PEND=null;
 function openShareBox(blob,fn,done){
   PEND={blob:blob,fn:fn,done:done};
-  openOv('<div class="sh-hd"><h3>¿Qué hacemos con el archivo?</h3><button class="ib" data-a="close" aria-label="Cerrar">'+ic('x')+'</button></div>'
+  openOv('<div class="sh-hd"><h3>Exportar archivo</h3><button class="ib" data-a="close" aria-label="Cerrar">'+ic('x')+'</button></div>'
    +'<p class="note" style="margin:0 0 4px"><b>'+esc(fn)+'</b> · '+Math.max(1,Math.round(blob.size/1024))+' KB</p>'
-   +'<button class="btn" data-a="sharego">'+ic('out')+'Compartir</button>'
-   +'<button class="btn s" data-a="saveto">Guardar en el dispositivo</button>'
-   +'<p class="note" id="share-msg" style="margin-top:10px">Compartir abre el menú de tu celular para elegir adónde mandarlo.</p>',true)}
+   +'<button class="btn" data-a="saveto">'+ic('out')+'Guardar en el dispositivo</button>'
+   +'<p class="note" id="share-msg" style="margin-top:10px">El archivo queda en la carpeta Descargas, o donde elijas si tienes activado «Preguntar dónde guardar» en Chrome.</p>',true)}
 function pendDone(msg){var d=PEND&&PEND.done;PEND=null;closeOv();if(d)d();toast(msg)}
 function slug(s){return norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'compra'}
 
@@ -1148,10 +1147,6 @@ var A={
    openShareBox(blob,fn,function(){if(S.bkInXlsx){S.lastBackup=Date.now();save()}EX.sel=[];EX.multi=false;renderExport();renderNav()})},
  'xl-copy':function(){copyText(tsv(false),'Copiado. Pega en la celda A4 de tu hoja.')},
  'xl-copyv':function(){copyText(tsv(true),'Copiado. Pega en la celda B4 de tu hoja.')},
- sharego:function(){if(!PEND)return;var f;try{f=new File([PEND.blob],PEND.fn,{type:PEND.blob.type||'application/octet-stream'})}catch(e){f=null}
-   var m=$('#share-msg');
-   if(!f||!navigator.share||!navigator.canShare||!navigator.canShare({files:[f]})){if(m){m.className='err';m.textContent='Este celular no dejó abrir el menú de compartir. Usa «Guardar en el dispositivo».'}return}
-   navigator.share({files:[f]}).then(function(){pendDone('Archivo compartido')}).catch(function(e){if(e&&e.name==='AbortError')return;if(m){m.className='err';m.textContent='No pude abrir el menú de compartir ('+((e&&e.name)||'error')+(e&&e.message?': '+String(e.message).slice(0,90):'')+'). Usa «Guardar en el dispositivo».'}})},
  saveto:function(){if(!PEND)return;try{var a=document.createElement('a');a.href=URL.createObjectURL(PEND.blob);a.download=PEND.fn;document.body.appendChild(a);a.click();var u=a.href;setTimeout(function(){URL.revokeObjectURL(u);a.remove()},2000);pendDone('Archivo guardado en Descargas')}catch(e){var m=$('#share-msg');if(m){m.className='err';m.textContent='No pude guardar el archivo.'}}},
  xltog:function(t){var c=$('#'+(t.dataset.c||'xl-hist'));c.checked=!c.checked;t.classList.toggle('off',!c.checked)},
  xlapply:function(){
