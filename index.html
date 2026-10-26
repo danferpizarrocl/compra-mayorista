@@ -602,7 +602,11 @@ function renderHist(){
       +'<div class="acts"><button class="btn s" data-a="hbase" data-id="'+h.id+'">Usar como base</button><button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button><button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
     var diff=h.xlTotal>0&&h.xlTotal!==tot?'<div class="warn">En tu Excel este total es '+money(h.xlTotal)+'</div>':'';
     return '<div class="hist"><button class="hd" data-a="hopen" data-id="'+h.id+'" aria-expanded="'+open+'"><span><b>'+esc(h.name)+'<span class="tag" style="background:transparent;border:1px solid '+tagColor(h.tag)+';color:var(--ink)">'+esc(h.tag)+'</span></b><em>'+(h.approx?fmonth(h.ts):fdate(h.ts))+' · '+h.lines.length+' productos</em>'+diff+'</span><span class="am">'+money(tot)+'</span></button>'+body+'</div>'}).join('');
-  $('#main').innerHTML='<div style="height:0"></div>'+chips+cur+'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
+  var hsum=list.reduce(function(a,h){return a+linesTotal(h.lines)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
+  var ymin=yrs.length?Math.min.apply(null,yrs):0,ymax=yrs.length?Math.max.apply(null,yrs):0;
+  var hsub=list.length+' compra'+(list.length===1?'':'s')+(yrs.length?' · '+(ymin===ymax?ymin:ymin+'–'+ymax):'')+(HF==='todas'?'':' · '+esc(HF));
+  var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total')+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span></div>';
+  $('#main').innerHTML='<div style="height:0"></div>'+totc+chips+cur+'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
    +'<section class="card"><h2>'+ic('cal')+ttl('anual','Total por año')+(HF==='todas'?'':' · '+esc(HF))+'</h2>'+yearsHTML()+'</section>'
    +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(HF==='todas'?'':' · '+esc(HF))+'</h2><div id="rkbox">'+rankBox()+'</div></section>'
    +'<section class="card"><h2>'+ic('list')+ttl('guardadas','Compras guardadas')+' · '+list.length+'</h2>'+(rows||'<p class="empty">Aún no hay compras guardadas.</p>')+'</section>';
