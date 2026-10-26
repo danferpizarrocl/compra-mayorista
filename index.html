@@ -772,6 +772,8 @@ function updCalc(){
   var perBox=v.price*v.units,tot=perBox*v.boxes,h='';
   if(SH.boxed)h='<div>'+money(v.price)+' × '+v.units+' unidades = <b>'+money(perBox)+'</b> por caja</div><div>'+money(perBox)+' × '+v.boxes+(v.boxes===1?' caja':' cajas')+'</div>';
   else h='<div>'+money(v.price)+' × '+v.units+' unidades</div>';
+  var un=v.units*(SH.boxed?v.boxes:1);
+  h+='<div id="unl"><b>'+(SH.boxed?v.units+' unidades × '+v.boxes+(v.boxes===1?' caja':' cajas')+' = ':'')+grp(un)+(un===1?' unidad':' unidades')+'</b></div>';
   $('#calc').innerHTML=h+'<div class="tt"><span>Total'+(SH.isNew?'':' '+esc(SH.name.trim()))+'</span><span>'+money(tot)+'</span></div>';
   $('#f-ok').disabled=!ok;
   var cm=$('#cmp'),ch=SH.id?chg(v.price,lastFor(itemById(SH.id))):null;cm.className='cmp'+(ch?' '+ch.k:'');cm.textContent=ch?ch.t:'';
