@@ -1044,20 +1044,34 @@ function paySheetXml(){
   var rows=S.history.filter(function(h){return h.sd||h.paid>0}).sort(function(a,b){return b.ts-a.ts});
   if(!rows.length)return null;
   var H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',t=function(r,v,st){return '<c r="'+r+'" t="inlineStr"'+(st?' s="'+st+'"':'')+'><is><t xml:space="preserve">'+xe(v)+'</t></is></c>'},n=function(r,v,st){return '<c r="'+r+'" s="'+st+'"><v>'+v+'</v></c>'};
-  var out='<row r="1">'+t('A1','Fecha',5)+t('B1','Compra',5)+t('C1','Pagado',5)+t('D1','Compra en la app',5)+t('F1','Cómo usar esta pestaña',0)+'</row>';
-  var last=rows.length+1,bk=!!S.bkInXlsx,side={};
-  ['Cada fila es un pago de Alvi.','Si «Compra en la app» está vacía, esa compra no tiene detalle de productos.','La compra más nueva está en la primera fila: copia solo esa fila a tu planilla maestra.','No reemplaces toda tu tabla con esta lista: aquí algunos pagos salen juntos o repartidos entre TP y Casa.'].forEach(function(x,i){side[3+i]=[x]});
-  side[8]=['Total pagado','SUM(C2:C'+last+')'];side[9]=['Sin detalle (columna D vacía)','SUMIF(D2:D'+last+',"",C2:C'+last+')'];side[10]=['Ya en la app','G8-G9'];side[11]=['Compras','COUNTA(B2:B'+last+')'];
-  var bn=bk?['Respaldo de la app (hoja «respaldo_app»)','Esta hoja puede quedar OCULTA: la app la lee igual al cargar el Excel. No hace falta mostrarla.','No la borres, no le cambies el nombre ni la edites; si no, la app no podrá recuperar tus productos, nombres de carros y ajustes.','Para recuperar todo: Configuración → Cargar tu Excel → elegir este archivo.','Al cargar, esta pestaña anota lo pagado en las compras que ya existen y agrega las demás como «sin detalle».','Si guardas este archivo desde tu planilla maestra, revisa que la hoja «respaldo_app» siga dentro.']:['Respaldo de la app','Este archivo NO trae la hoja «respaldo_app» (se exportó sin «Incluir respaldo de la app»).','Con este archivo la app solo puede anotar los pagos; no recupera productos ni ajustes.'];
-  bn.forEach(function(x,i){side[13+i]=[x]});
-  var total=Math.max(last,13+bn.length-1);
+  var out='<row r="1">'+t('A1','Fecha',5)+t('B1','Compra',5)+t('C1','Pagado',5)+t('D1','Compra en la app',5)+t('F1','Cómo usar este archivo (guía completa)',0)+'</row>';
+  var last=rows.length+1,bk=!!S.bkInXlsx,side={},g=[];
+  side[3]=['Total pagado','SUM(C2:C'+last+')'];side[4]=['Sin detalle (columna D vacía)','SUMIF(D2:D'+last+',"",C2:C'+last+')'];side[5]=['Ya en la app','G3-G4'];side[6]=['Compras','COUNTA(B2:B'+last+')'];
+  g.push('1. Lo primero: el respaldo');
+  if(bk){g.push('• La hoja «respaldo_app» es tu respaldo completo: productos, nombres de carros, compras guardadas y ajustes.','• Puede quedar oculta: la app la lee igual. No la borres, no le cambies el nombre ni la edites.')}
+  else g.push('• Este archivo NO trae la hoja «respaldo_app» (se exportó sin «Incluir respaldo de la app»).','• Con este archivo la app solo puede anotar los pagos; no recupera productos ni ajustes.');
+  g.push('• Antes de cambiar tu planilla maestra, guarda una copia de este archivo.','',
+   '2. Cómo pasar una compra nueva a tu Excel maestro',
+   '• Copia la hoja de la compra (la primera pestaña) a tu planilla maestra, como siempre.',
+   '• En esta pestaña, copia solo la fila de arriba (la compra más nueva) a tu tabla de pagos.',
+   '• No reemplaces toda tu tabla con esta lista: algunos pagos salen juntos o repartidos entre TP y Casa.',
+   '• Si «Compra en la app» está vacía, esa compra no tiene detalle de productos.','',
+   '3. Cómo recuperar o actualizar la app desde el Excel',
+   '• Configuración → Cargar tu Excel → elegir el archivo.',
+   '• Se recuperan los productos, los carros y el historial.',
+   '• Los pagos se anotan en las compras que ya existen; las que faltan se agregan como «sin detalle».','',
+   '4. Cada vez que exportes',
+   '• Deja activado «Incluir respaldo de la app»: sin eso, el archivo solo sirve para anotar pagos.',
+   '• Guarda siempre el archivo más reciente en tu nube: ese es tu respaldo vigente.');
+  g.forEach(function(x,i){if(x)side[8+i]=[x]});
+  var total=Math.max(last,8+g.length-1);
   var data={};rows.forEach(function(h,i){data[i+2]=h});
   for(var r=2;r<=total;r++){var h=data[r],c='';
     if(h){var d=new Date(h.ts),serial=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000)+25569;
       c=n('A'+r,serial,9)+t('B'+r,h.sd?(h.sdName||h.name):h.name,1)+n('C'+r,hTotal(h),2)+(h.sd?'<c r="D'+r+'" s="1"/>':t('D'+r,h.name,1))}
     var sd=side[r];if(sd){c+=t('F'+r,sd[0],0);if(sd[1])c+='<c r="G'+r+'" s="2"><f>'+xe(sd[1])+'</f></c>'}
     out+='<row r="'+r+'">'+c+'</row>'}
-  return H+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="13" customWidth="1"/><col min="2" max="2" width="30" customWidth="1"/><col min="3" max="3" width="14" customWidth="1"/><col min="4" max="4" width="32" customWidth="1"/><col min="6" max="6" width="34" customWidth="1"/><col min="7" max="7" width="14" customWidth="1"/></cols><sheetData>'+out+'</sheetData></worksheet>'}
+  return H+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="13" customWidth="1"/><col min="2" max="2" width="30" customWidth="1"/><col min="3" max="3" width="14" customWidth="1"/><col min="4" max="4" width="32" customWidth="1"/><col min="6" max="6" width="95" customWidth="1"/><col min="7" max="7" width="14" customWidth="1"/></cols><sheetData>'+out+'</sheetData></worksheet>'}
 function slug(s){return norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'compra'}
 
 /* ---------- copiar ---------- */
@@ -1174,7 +1188,7 @@ var A={
    openOv('<div class="sh-hd"><h3>¿Borrar esta compra?</h3></div><p class="note" style="margin:0"><b>'+esc(h.name)+'</b> · '+esc(h.tag)+'<br>'+(h.sd?'sin detalle':h.lines.length+' productos')+' · '+money(hTotal(h))+'</p><p class="note" style="margin:8px 0 0">Se quita del historial.</p>'
     +'<div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn d" data-a="hdelok" data-id="'+h.id+'">Borrar</button></div>',true)},
  hdelok:function(t){closeOv();var id=t.dataset.id,i=S.history.findIndex(function(h){return h.id===id}),h=S.history[i];S.history.splice(i,1);LM=AL=null;hOpen=null;CHSEL=-1;save();renderHist();toast('Compra borrada',function(){S.history.splice(i,0,h);LM=AL=null;save();renderHist()})},
- payapply:function(){if(!PAYX)return;var pr=applyPay(PAYX);PAYX=null;save();render();toast(payToast(pr)||'No había nada que aplicar')},
+ payapply:function(){if(!PAYX)return;var pr=applyPay(PAYX);PAYX=null;save();closeOv();render();toast(payToast(pr)||'No había nada que aplicar')},
  hbase:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(C()?'Reemplaza el carro actual por esta compra.':'Inicia una compra con esta lista de productos.')+'</p><button class="btn" data-a="hbaseok" data-id="'+t.dataset.id+'">Sí, usar como base</button>';b.appendChild(d)}},
  hbaseok:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});
    if(!S.session)S.session={carts:[newCart(S.names.indexOf(h.tag)>=0?h.tag:S.names[0],{},S.budget)],active:0,multi:false};
