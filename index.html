@@ -475,11 +475,11 @@ function sugCard(c){
 
 /* ---------- recordatorio de respaldo ---------- */
 function bkJson(){return JSON.stringify(S).replace(/[\u007f-\uffff]/g,function(c){return '\\u'+('0000'+c.charCodeAt(0).toString(16)).slice(-4)})}
+function bkToggle(){
+  return '<button class="tgl'+(S.bkInXlsx?'':' off')+'" data-a="bkx" aria-pressed="'+S.bkInXlsx+'"><span>Incluir respaldo de la app<small style="display:block;font-weight:400;color:var(--muted);font-size:12px">Hoja oculta «respaldo_app» dentro del archivo</small></span><span class="sw"></span></button>'
+   +'<p class="note">Tu Excel se ve igual que siempre: la hoja extra queda <b>oculta</b>. Guarda tus productos, nombres de carros, compras guardadas y ajustes. Al cargar ese Excel en la app (Configuración → Cargar tu Excel) puedes recuperar todo.</p>'}
 function bkCards(){
-  return '<section class="card"><h2>'+ic('dl')+ttl('bkx','Respaldo dentro del Excel')+'</h2>'
-   +'<button class="tgl'+(S.bkInXlsx?'':' off')+'" data-a="bkx" aria-pressed="'+S.bkInXlsx+'"><span>Incluir respaldo de la app<small style="display:block;font-weight:400;color:var(--muted);font-size:12px">Hoja oculta «respaldo_app» dentro del archivo</small></span><span class="sw"></span></button>'
-   +'<p class="note">Tu Excel se ve igual que siempre: la hoja extra queda <b>oculta</b>. Guarda tus productos, nombres de carros, compras guardadas y ajustes. Al cargar ese Excel en la app (Configuración → Cargar tu Excel) puedes recuperar todo.</p></section>'
-   +'<section class="card"><h2>'+ic('dl')+ttl('bkr','Respaldo')+'</h2>'
+  return '<section class="card"><h2>'+ic('dl')+ttl('bkr','Respaldo')+'</h2>'
    +'<button class="btn" data-a="bkonly">'+ic('dl')+'Respaldar solo los datos (.xlsx)</button><p class="note">El .xlsx trae una hoja de aviso y la hoja oculta «respaldo_app». Sirve para cambiar de celular o para actualizar la hoja en tu planilla central, sin necesidad de exportar una compra.</p></section>'}
 
 /* ---------- vista: Buscar ---------- */
@@ -647,6 +647,7 @@ function renderExport(){
    +'<div class="exlist">'+(list||'<p class="empty">No hay compras para exportar.</p>')+'</div>'
    +blocks
    +(sel.length?'<p class="note">Cada hoja trae los '+S.items.length+' ítems de tu lista en el mismo orden (los que no compraste quedan en blanco), con las fórmulas de tu planilla. El archivo también trae la pestaña «Pagado en caja» con lo que pagaste en cada compra.</p>':'')
+   +bkToggle()
    +'<button class="btn" data-a="xl-share"'+(any?'':' disabled')+'>'+ic('out')+'Compartir archivo .xlsx'+(sel.length>1?' ('+sel.length+' hojas)':'')+'</button>'
    +'</section>'+bkCards();
   updateTotals();watchBig();
