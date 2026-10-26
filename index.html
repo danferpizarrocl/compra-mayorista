@@ -1282,7 +1282,8 @@ document.addEventListener('focusout',function(e){var t=e.target;if(t&&t.id==='q'
 if(window.visualViewport){visualViewport.addEventListener('resize',function(){kbPad();kbShow()})}
 /* el visto bueno del teclado cierra el teclado */
 document.addEventListener('keydown',function(e){var t=e.target;if(e.key!=='Enter'||!t||t.tagName!=='INPUT'||t.readOnly)return;
-  if(t.id==='q'||t.id==='f-price'||t.id==='f-name'||t.id==='fin-name'||/^kg-/.test(t.id)||t.id==='r-bud'&&false){e.preventDefault();t.blur()}});
+  if(/^(checkbox|radio|file|button|submit|range)$/.test(t.type))return;
+  e.preventDefault();t.blur()});
 
 /* ---------- inicio ---------- */
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
