@@ -210,6 +210,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;letter-spacing:-.01em}
 .hist .am{font-family:var(--f-display);font-weight:700;color:var(--accent);white-space:nowrap}
 .tag{font-size:10.5px;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:2px 7px;margin-left:6px;font-weight:700;vertical-align:middle}
 .warn{font-size:12px;color:var(--bad);margin-top:3px}
+.paidbox{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}.paidbox .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.paidbox .row:first-child{margin-top:0}.paidbox input{width:150px;text-align:right;font-weight:800}.paidbox small{display:block;margin-top:8px;color:var(--muted);font-size:12px}.sdl{color:var(--lvy);font-weight:700}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .acts .btn{margin-top:0;width:auto;flex:1;min-width:120px;padding:10px;min-height:42px;font-size:13.5px}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
@@ -351,7 +352,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,EDIT=false,HF='todas',RK='dinero',CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
+var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,HF='todas',RK='dinero',CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
   var items=DEFAULT_ITEMS.map(function(n){return {id:uid(),name:n}});
@@ -391,6 +392,11 @@ function lm(){if(LM)return LM;LM={};S.history.forEach(function(h){h.lines.forEac
 function lastFor(it){var r=lm()[canon(it.name)];if(r)return r;if(S.last){if(S.last[it.name])return S.last[it.name];var al=it.alias||[];for(var i=0;i<al.length;i++)if(S.last[al[i]])return S.last[al[i]]}return null}
 function curLines(c){c=c||C();if(!c)return [];return S.items.filter(function(i){return c.cart[i.id]}).map(function(i){var x=c.cart[i.id];return {name:i.name,price:x.price,boxed:x.boxed,units:x.units,boxes:x.boxes}})}
 function linesTotal(ls){return ls.reduce(function(a,l){return a+calc(l).total},0)}
+var SD_TAG='Sin detalle';
+function gondTotal(h){return h.sd?(+h.paid||0):linesTotal(h.lines)}
+function hTotal(h){return h.paid>0?+h.paid:linesTotal(h.lines)}
+function discTxt(g,p){if(!(p>0)||!(g>0))return '—';var d=g-p,pc=(Math.abs(d)/g*100).toFixed(1).replace('.',',');
+  return d>0?'<span style="color:var(--lvg)">−'+money(d)+' ('+pc+' %)</span>':d<0?'<span style="color:var(--budred)">+'+money(-d)+' ('+pc+' % más)</span>':'sin descuento'}
 function baseName(){var d=new Date();return d.getFullYear()+' '+MES[d.getMonth()]}
 function cartSheetName(c){return baseName()+(S.session&&S.session.multi?' '+c.name:'')}
 function chg(price,last){if(!last||!(price>0))return null;var d=price-last.p;if(d===0)return {k:'eq',t:'Igual que la última vez ('+money(last.p)+')',s:'='};
@@ -439,7 +445,7 @@ function updateTotals(){
 }
 function renderNav(){
   var tabs=[['comprar','Buscar','search'],['carro','Carro','cart'],['historial','Historial','clock'],['calc','Calc.','calc'],['exportar','Exportar','out']];
-  $('#nav .in').innerHTML=tabs.map(function(t){if(t[0]==='calc')return '<button data-a="calc" aria-label="Calculadora">'+ic(t[2])+'<span>'+t[1]+'</span></button>';return '<button data-a="tab" data-v="'+t[0]+'"'+(view===t[0]?' aria-current="page"':'')+'>'+ic(t[2])+'<span>'+t[1]+'</span>'+(t[0]==='carro'?'<span class="badge">'+totalsOf(C()).count+'</span>':'')+(t[0]==='exportar'&&bkDue()?'<span class="dot" aria-label="Respaldo pendiente"></span>':'')+'</button>'}).join('')}
+  $('#nav .in').innerHTML=tabs.map(function(t){if(t[0]==='calc')return '<button data-a="calc" aria-label="Calculadora">'+ic(t[2])+'<span>'+t[1]+'</span></button>';return '<button data-a="tab" data-v="'+t[0]+'"'+(view===t[0]?' aria-current="page"':'')+'>'+ic(t[2])+'<span>'+t[1]+'</span>'+(t[0]==='carro'?'<span class="badge">'+totalsOf(C()).count+'</span>':'')+'</button>'}).join('')}
 function cartSwitch(){
   if(!S.session||S.session.carts.length<2)return '';
   return '<div class="cartsw" role="group" aria-label="Carro activo">'+S.session.carts.map(function(c,i){return '<button data-a="cartsw" data-i="'+i+'" aria-pressed="'+(S.session.active===i)+'">'+esc(c.name)+'<b>'+money(totalsOf(c).total)+'</b></button>'}).join('')+'</div>'}
@@ -447,7 +453,7 @@ function startCard(){
   return '<section class="card startc"><h2>'+ic('flag')+ttl('nueva','Nueva compra')+'</h2><p>Arma tu carro, revisa cuánto llevas y al terminar queda guardado en el historial.</p><button class="btn" data-a="start">Iniciar compra</button></section>'}
 
 /* ---------- lista sugerida ---------- */
-function prevPurchase(c){var best=null;S.history.forEach(function(h){if(h.tag===c.name&&(!best||h.ts>best.ts))best=h});if(!best)S.history.forEach(function(h){if(!best||h.ts>best.ts)best=h});return best}
+function prevPurchase(c){var best=null;S.history.forEach(function(h){if(!h.sd&&h.tag===c.name&&(!best||h.ts>best.ts))best=h});if(!best)S.history.forEach(function(h){if(!h.sd&&(!best||h.ts>best.ts))best=h});return best}
 function sugFrom(lines){var out=[];lines.forEach(function(l){var it=S.items.find(function(x){return canon(x.name)===canon(l.name)});if(!it){it={id:uid(),name:String(l.name).trim()};S.items.push(it);AL=null}
   if(out.some(function(o){return o.id===it.id}))return;out.push({id:it.id,units:l.units,boxed:!!l.boxed,boxes:l.boxes||1})});return out}
 function qtyTxt(l){return l.boxed?l.boxes+(l.boxes===1?' caja':' cajas')+' × '+l.units+' un':l.units+' un'}
@@ -466,19 +472,12 @@ function sugCard(c){
    +'<button class="btn s" data-a="sugoff">Cerrar la lista</button></section>'}
 
 /* ---------- recordatorio de respaldo ---------- */
-function bkDue(){var ev=S.bkEvery;if(!ev)return false;var base=S.lastBackup||S.since||Date.now();return Date.now()-base>ev*30*86400000&&Date.now()>(S.bkSnooze||0)}
-function bkAgo(){var b=S.lastBackup;if(!b)return 'Todavía no has hecho ninguno';var d=Math.floor((Date.now()-b)/86400000),t=d<1?'hoy':d<31?'hace '+d+(d===1?' día':' días'):'hace '+Math.floor(d/30)+(Math.floor(d/30)===1?' mes':' meses');return fdate(b)+' · '+t}
-function bkBanner(){if(!bkDue())return '';var b=S.lastBackup||S.since,m=Math.max(1,Math.floor((Date.now()-b)/(30*86400000)));
-  return '<div class="bnr"><span><b>'+(S.lastBackup?'Hace '+m+(m===1?' mes':' meses')+' que no respaldas tus datos.':'Todavía no has respaldado tus datos.')+'</b><br><span style="opacity:.85">Si pierdes el celular o se borran los datos del navegador, se pierde todo.</span></span><div class="r"><button class="p" data-a="bkgo">Exportar ahora</button><button class="s" data-a="bklater">Mañana</button></div></div>'}
 function bkJson(){return JSON.stringify(S).replace(/[\u007f-\uffff]/g,function(c){return '\\u'+('0000'+c.charCodeAt(0).toString(16)).slice(-4)})}
 function bkCards(){
-  var ev=[[1,'1 mes'],[2,'2 meses'],[3,'3 meses'],[6,'6 meses'],[0,'Nunca']].map(function(x){return '<button class="chip" data-a="bkevery" data-m="'+x[0]+'" aria-pressed="'+(S.bkEvery===x[0])+'">'+x[1]+'</button>'}).join('');
   return '<section class="card"><h2>'+ic('dl')+ttl('bkx','Respaldo dentro del Excel')+'</h2>'
    +'<button class="tgl'+(S.bkInXlsx?'':' off')+'" data-a="bkx" aria-pressed="'+S.bkInXlsx+'"><span>Incluir respaldo de la app<small style="display:block;font-weight:400;color:var(--muted);font-size:12px">Hoja oculta «respaldo_app» dentro del archivo</small></span><span class="sw"></span></button>'
    +'<p class="note">Tu Excel se ve igual que siempre: la hoja extra queda <b>oculta</b>. Guarda tus productos, nombres de carros, compras guardadas y ajustes. Al cargar ese Excel en la app (Configuración → Cargar tu Excel) puedes recuperar todo.</p></section>'
-   +'<section class="card"><h2>'+ic('bell')+ttl('bkr','Recordatorio de respaldo')+'</h2>'
-   +'<div class="srow" style="border-top:0"><span class="l">Último respaldo<small>'+bkAgo()+'</small></span>'+(bkDue()?'<b style="color:var(--bad)">Atrasado</b>':'')+'</div>'
-   +'<div class="srow" style="border-top:0;padding-bottom:0"><span class="l">Avisarme cada<small>Si pasa ese tiempo sin respaldar</small></span></div><div class="chips" style="margin-top:8px">'+ev+'</div>'
+   +'<section class="card"><h2>'+ic('dl')+ttl('bkr','Respaldo')+'</h2>'
    +'<button class="btn" data-a="bkonly">'+ic('dl')+'Respaldar solo los datos (.xlsx)</button><button class="btn s" data-a="backup">'+ic('dl')+'Guardar respaldo en .json</button><p class="note">El .xlsx trae una hoja de aviso y la hoja oculta «respaldo_app». Sirve para cambiar de celular o para actualizar la hoja en tu planilla central, sin necesidad de exportar una compra.</p></section>'}
 
 /* ---------- vista: Buscar ---------- */
@@ -486,8 +485,8 @@ function rank(it,q){var n=norm(it.name);if(!q)return 1;var parts=q.split(' ');
   for(var i=0;i<parts.length;i++){if(n.indexOf(parts[i])<0)return 0}
   if(n.indexOf(q)===0)return 3;if((' '+n).indexOf(' '+q)>=0)return 2;return 1}
 function renderComprar(){
-  if(!C()){$('#main').innerHTML=bkBanner()+startCard();updateTotals();watchBig();return}
-  var c=C(),html=bkBanner()+cartSwitch()+sugCard(c);
+  if(!C()){$('#main').innerHTML=startCard();updateTotals();watchBig();return}
+  var c=C(),html=cartSwitch()+sugCard(c);
   S.cards.forEach(function(k){
     if(S.hidden.indexOf(k)>=0)return;
     var mv=S.reorder?'<div class="mv"><button data-a="mv" data-c="'+k+'" data-d="-1" aria-label="Subir tarjeta">'+ic('up')+'</button><button data-a="mv" data-c="'+k+'" data-d="1" aria-label="Bajar tarjeta">'+ic('dn')+'</button></div>':'';
@@ -548,7 +547,7 @@ function barPath(x,y,w,h,r){r=Math.max(0,Math.min(r,h,w/2));return 'M'+x+','+(y+
 function chartHTML(){
   var list=histList().slice().sort(function(a,b){return a.ts-b.ts});
   if(list.length<1)return '<p class="empty">Cuando finalices una compra o cargues tu Excel, verás aquí cómo ha ido tu gasto.</p>';
-  var vals=list.map(function(h){return linesTotal(h.lines)}),max=Math.max.apply(null,vals),step=niceStep(max),top=Math.ceil(max/step)*step;
+  var vals=list.map(function(h){return hTotal(h)}),max=Math.max.apply(null,vals),step=niceStep(max),top=Math.ceil(max/step)*step;
   var slot=34,bw=22,L=0,R=12,H=210,pt=14,pb=30,ph=H-pt-pb,W=L+list.length*slot+R,svg='',ax='';
   for(var v=0;v<=top;v+=step){var y=pt+ph-v/top*ph;svg+='<line class="gl" x1="0" x2="'+W+'" y1="'+y+'" y2="'+y+'"/>';ax+='<text class="ax" x="52" y="'+(y+3.5)+'" text-anchor="end">'+kfmt(v)+'</text>'}
   list.forEach(function(h,i){var x=L+i*slot+(slot-bw)/2,bh=vals[i]/top*ph,y=pt+ph-bh,sel=CHSEL===h.id;
@@ -559,7 +558,7 @@ function chartHTML(){
   var tags=[];list.forEach(function(h){if(tags.indexOf(h.tag)<0)tags.push(h.tag)});
   var leg=tags.length>1?'<div class="leg">'+tags.map(function(t){return '<span><i style="background:'+tagColor(t)+'"></i>'+esc(t)+'</span>'}).join('')+'</div>':'';
   var sel=CHSEL&&S.history.find(function(h){return h.id===CHSEL});
-  var info=sel?'<b>'+esc(sel.name)+'</b> · '+esc(sel.tag)+' · '+money(linesTotal(sel.lines))+' · '+sel.lines.length+' productos':'Toca una barra para ver el detalle.';
+  var info=sel?'<b>'+esc(sel.name)+'</b> · '+esc(sel.tag)+' · '+money(hTotal(sel))+' · '+(sel.sd?'sin detalle':sel.lines.length+' productos'):'Toca una barra para ver el detalle.';
   return leg+'<div class="chw"><svg class="cax" aria-hidden="true" viewBox="0 0 56 '+H+'" style="width:56px;height:'+H+'px">'+ax+'</svg><div class="chs" id="chs"><svg role="img" aria-label="Gasto por compra, de '+money(Math.min.apply(null,vals))+' a '+money(max)+'" viewBox="0 0 '+W+' '+H+'" style="width:'+W+'px;height:'+H+'px">'+svg+'</svg></div></div><div class="cinfo" id="cinfo">'+info+'</div>'}
 function rankHTML(){
   var list=histList().slice().sort(function(a,b){return a.ts-b.ts}),agg={},order=[];
@@ -583,7 +582,7 @@ function rankHTML(){
   return rows}
 function rankBox(){return '<div class="seg" role="group"><button data-a="rk" data-k="dinero" aria-pressed="'+(RK==='dinero')+'">Dinero</button><button data-a="rk" data-k="cantidad" aria-pressed="'+(RK==='cantidad')+'">Cantidad</button></div><p class="note" style="margin:8px 0 0">'+(RK==='dinero'?'Cuánto has gastado en cada producto y cómo cambió su precio por unidad desde el primer registro.':'Unidades compradas de cada producto (cajas × unidades por caja). Empates por orden alfabético.')+' Solo productos que sí compraste.</p><div style="margin-top:6px">'+rankHTML()+'</div>'}
 function yearsHTML(){
-  var by={};histList().forEach(function(h){var y=new Date(h.ts).getFullYear(),a=by[y]||(by[y]={y:y,t:0,n:0});a.t+=linesTotal(h.lines);a.n++});
+  var by={};histList().forEach(function(h){var y=new Date(h.ts).getFullYear(),a=by[y]||(by[y]={y:y,t:0,n:0});a.t+=hTotal(h);a.n++});
   var ys=Object.keys(by).map(Number).sort(function(a,b){return b-a});
   if(!ys.length)return '<p class="empty">Cuando tengas compras guardadas, verás aquí cuánto gastaste cada año.</p>';
   var max=Math.max.apply(null,ys.map(function(y){return by[y].t}))||1,cur=new Date().getFullYear();
@@ -597,15 +596,16 @@ function renderHist(){
   var cur='';
   if(S.session)cur='<section class="card"><h2>'+ic('cart')+ttl('encurso','En curso')+'</h2>'+S.session.carts.map(function(c){var t=totalsOf(c);return '<div class="hist"><div class="hd"><span><b>'+esc(c.name)+'<span class="tag">en curso</span></b><em>'+t.count+' productos</em></span><span class="am">'+money(t.total)+'</span></div></div>'}).join('')+'</section>';
   var list=histList();
-  var rows=list.map(function(h){var open=hOpen===h.id,tot=linesTotal(h.lines);
-    var body=open?'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>'
-      +'<div class="acts"><button class="btn s" data-a="hbase" data-id="'+h.id+'">Usar como base</button><button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button><button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
-    var diff=h.xlTotal>0&&h.xlTotal!==tot?'<div class="warn">En tu Excel este total es '+money(h.xlTotal)+'</div>':'';
-    return '<div class="hist"><button class="hd" data-a="hopen" data-id="'+h.id+'" aria-expanded="'+open+'"><span><b>'+esc(h.name)+'<span class="tag" style="background:transparent;border:1px solid '+tagColor(h.tag)+';color:var(--ink)">'+esc(h.tag)+'</span></b><em>'+(h.approx?fmonth(h.ts):fdate(h.ts))+' · '+h.lines.length+' productos</em>'+diff+'</span><span class="am">'+money(tot)+'</span></button>'+body+'</div>'}).join('');
-  var hsum=list.reduce(function(a,h){return a+linesTotal(h.lines)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
+  var rows=list.map(function(h){var open=hOpen===h.id,tot=hTotal(h),gd=gondTotal(h);
+    var pbox=open?'<div class="paidbox">'+(h.sd?'':'<div class="row"><span>Precio de lista</span><b>'+money(gd)+'</b></div>')+'<div class="row"><span>Pagado en caja</span><input class="inp" id="paid-h" data-id="'+h.id+'" inputmode="numeric" placeholder="$ según la boleta" value="'+(h.paid>0?'$'+grp(h.paid):'')+'"></div>'+(h.sd?'':'<div class="row"><span>Descuento</span><b id="paid-d">'+discTxt(gd,h.paid)+'</b></div><small>Si lo dejas vacío, se usa el precio de lista.</small>')+'</div>':'';
+    var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox
+      +'<div class="acts">'+(h.sd?'':'<button class="btn s" data-a="hbase" data-id="'+h.id+'">Usar como base</button><button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
+    var diff=!h.sd&&h.xlTotal>0&&h.xlTotal!==gd?'<div class="warn">En tu Excel este total es '+money(h.xlTotal)+'</div>':'';
+    return '<div class="hist"><button class="hd" data-a="hopen" data-id="'+h.id+'" aria-expanded="'+open+'"><span><b>'+esc(h.name)+'<span class="tag" style="background:transparent;border:1px solid '+tagColor(h.tag)+';color:var(--ink)">'+esc(h.tag)+'</span></b><em>'+(h.approx?fmonth(h.ts):fdate(h.ts))+' · '+(h.sd?'<span class="sdl">sin detalle</span>':h.lines.length+' productos')+'</em>'+diff+'</span><span class="am" style="text-align:right">'+money(tot)+(!h.sd&&h.paid>0&&h.paid!==gd?'<br><small style="font-weight:500;color:var(--muted);font-size:11.5px">precio de lista '+money(gd)+'</small>':'')+'</span></button>'+body+'</div>'}).join('');
+  var hsum=list.reduce(function(a,h){return a+hTotal(h)},0),hgon=list.reduce(function(a,h){return a+gondTotal(h)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
   var ymin=yrs.length?Math.min.apply(null,yrs):0,ymax=yrs.length?Math.max.apply(null,yrs):0;
   var hsub=list.length+' compra'+(list.length===1?'':'s')+(yrs.length?' · '+(ymin===ymax?ymin:ymin+'–'+ymax):'')+(HF==='todas'?'':' · '+esc(HF));
-  var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total')+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span></div>';
+  var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total')+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span>'+(hgon!==hsum?'<div class="allc"><div class="row"><span>Precio de lista</span><b>'+money(hgon)+'</b></div><div class="row"><span>Pagado en caja</span><b>'+money(hsum)+'</b></div><div class="row"><span>Descuentos</span><b style="color:var(--lvg)">'+(hgon>hsum?'−':'+')+money(Math.abs(hgon-hsum))+'</b></div><small>Los descuentos de caja son la diferencia entre ambos.</small></div>':'')+'</div>';
   $('#main').innerHTML='<div style="height:0"></div>'+totc+chips+cur+'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
    +'<section class="card"><h2>'+ic('cal')+ttl('anual','Total por año')+(HF==='todas'?'':' · '+esc(HF))+'</h2>'+yearsHTML()+'</section>'
    +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(HF==='todas'?'':' · '+esc(HF))+'</h2><div id="rkbox">'+rankBox()+'</div></section>'
@@ -615,7 +615,7 @@ function renderHist(){
 }
 
 /* ---------- vista: Exportar ---------- */
-function exSources(){var a=[];if(S.session)S.session.carts.forEach(function(c){a.push({v:'cur:'+c.id,label:'Carro '+c.name+' (en curso)'})});S.history.forEach(function(h){a.push({v:h.id,label:h.name+' · '+h.tag})});return a}
+function exSources(){var a=[];if(S.session)S.session.carts.forEach(function(c){a.push({v:'cur:'+c.id,label:'Carro '+c.name+' (en curso)'})});S.history.forEach(function(h){if(!h.sd)a.push({v:h.id,label:h.name+' · '+h.tag})});return a}
 function exInfoFor(src){
   if(src.indexOf('cur:')===0){var c=S.session&&S.session.carts.find(function(x){return 'cur:'+x.id===src});return c?{lines:curLines(c),name:cartSheetName(c),budget:c.budget}:null}
   var h=S.history.find(function(x){return x.id===src});return h?{lines:h.lines,name:h.name,budget:h.budget==null?S.budget:h.budget}:null}
@@ -643,7 +643,7 @@ function renderExport(){
    +'<div class="exbar"><span class="note" style="margin:0">'+help+'</span><button class="chip" data-a="exmulti" aria-pressed="'+!!EX.multi+'">'+ic('list')+'Selección múltiple</button></div>'
    +'<div class="exlist">'+(list||'<p class="empty">No hay compras para exportar.</p>')+'</div>'
    +blocks
-   +(sel.length?'<p class="note">Cada hoja trae los '+S.items.length+' ítems de tu lista en el mismo orden (los que no compraste quedan en blanco), con las fórmulas de tu planilla.</p>':'')
+   +(sel.length?'<p class="note">Cada hoja trae los '+S.items.length+' ítems de tu lista en el mismo orden (los que no compraste quedan en blanco), con las fórmulas de tu planilla. El archivo también trae la pestaña «Pagado en caja» con lo que pagaste en cada compra.</p>':'')
    +'<button class="btn" data-a="xl-share"'+(any?'':' disabled')+'>'+ic('out')+'Compartir archivo .xlsx'+(sel.length>1?' ('+sel.length+' hojas)':'')+'</button>'
    +'</section>'+bkCards();
   updateTotals();watchBig();
@@ -825,6 +825,33 @@ function finishOk(){
   if(!S.session.carts.length){S.session=null;S.calcHist=[]}else S.session.active=0;
   save();closeOv();render();window.scrollTo(0,0);
   openSummary(h,prev)}
+function payCell(v){if(typeof v==='number')return v;if(typeof v==='string')return num(v);return 0}
+function payDate(v){
+  if(typeof v==='number'&&v>20000){var d=new Date((v-25569)*86400000);return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),12).getTime()}
+  if(typeof v==='string'){var t=v.trim(),m=/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/.exec(t);
+    if(m){var y=+m[3];if(y<100)y+=2000;return new Date(y,+m[2]-1,+m[1],12).getTime()}
+    m=/(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t);if(m)return new Date(+m[1],+m[2]-1,+m[3],12).getTime()}
+  return null}
+function applyPay(sh){
+  var rows=sh.rows,keys=Object.keys(rows).map(Number).sort(function(a,b){return a-b}),hdr=0;
+  for(var i=0;i<keys.length&&i<8;i++){var a=rows[keys[i]].A;if(typeof a==='string'&&norm(a)==='fecha'){hdr=keys[i];break}}
+  var res={set:0,added:0,upd:0,missing:[],bad:0},pm={};
+  keys.forEach(function(r){if(r<=hdr)return;var row=rows[r],ts=payDate(row.A),paid=payCell(row.C),nm=typeof row.B==='string'?row.B.trim():(row.B!=null?String(row.B):'');
+    if(!ts||!(paid>0))return;
+    var tg=typeof row.D==='string'?row.D.split('+').map(function(x){return x.trim()}).filter(Boolean):[];
+    if(!tg.length){var d=new Date(ts),key=d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()+'|'+norm(nm),nmx=(nm||'Compra')+' '+MES[d.getMonth()].toLowerCase()+' '+d.getFullYear();
+      var ex=S.history.find(function(h){return h.sd&&h.sdKey===key});
+      if(ex){if(ex.paid!==paid){ex.paid=paid;res.upd++}}
+      else{S.history.push({id:uid(),name:nmx,sdName:nm||'Compra',tag:SD_TAG,ts:ts,approx:false,lines:[],budget:null,sd:true,sdKey:key,paid:paid,src:'xl'});res.added++}
+      return}
+    var hs=tg.map(function(t){return S.history.find(function(h){return !h.sd&&sk(h.name)===sk(t)})});
+    if(hs.some(function(h){return !h})){tg.forEach(function(t,i){if(!hs[i]&&res.missing.indexOf(t)<0)res.missing.push(t)});return}
+    var gs=hs.map(function(h){return linesTotal(h.lines)}),sum=gs.reduce(function(a,b){return a+b},0),left=paid;
+    hs.forEach(function(h,i){var part=i===hs.length-1?left:Math.round(sum>0?paid*gs[i]/sum:paid/hs.length);left-=part;pm[h.id]=(pm[h.id]||0)+part})});
+  Object.keys(pm).forEach(function(id){var h=S.history.find(function(x){return x.id===id});if(h&&h.paid!==pm[id]){h.paid=pm[id];res.set++}});
+  S.history.sort(function(a,b){return b.ts-a.ts});
+  return res}
+function payToast(r){var p=[];if(r.set)p.push(r.set+(r.set===1?' compra con monto de caja':' compras con monto de caja'));if(r.added)p.push(r.added+' sin detalle');if(r.upd)p.push(r.upd+(r.upd===1?' monto actualizado':' montos actualizados'));if(r.missing.length)p.push('no encontré: '+r.missing.join(', '));return p.join(' · ')}
 function openSummary(h,prev){
   var tot=linesTotal(h.lines),body='',sec=function(arr,t,col){return arr.length?'<div class="sec2">'+t+'</div>'+arr.map(function(x){return '<div style="display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:14px"><span><b>'+esc(x.n)+'</b><br><span style="color:var(--muted);font-size:12px">'+money(x.a)+' → '+money(x.b)+'</span></span><b style="color:'+col+'">'+(x.p>0?'+':'')+Math.round(x.p)+' %</b></div>'}).join(''):''};
   if(prev){var pm={};prev.lines.forEach(function(l){pm[canon(l.name)]=l});var ch=[];
@@ -837,7 +864,8 @@ function openSummary(h,prev){
      +((up.length+dn.length+big.length)?'':'<p class="note">No hay productos con precio distinto para comparar.</p>')
      +'<p class="note">Se compara producto por producto, con el precio por unidad. Los productos nuevos no entran. Un cambio de 60 % o más se marca para revisar, por si fue un error de dígito.</p>'}
   else body='<p class="note">Es la primera compra de «'+esc(h.tag)+'» en tu historial, así que todavía no hay con qué comparar.</p>';
-  openOv('<div class="sh-hd"><h3>Compra guardada ✓</h3></div><div class="extot" style="margin-top:0"><span>Total</span><b>'+money(tot)+'</b></div>'+body
+  openOv('<div class="sh-hd"><h3>Compra guardada ✓</h3></div><div class="extot" style="margin-top:0"><span>Precio de lista</span><b>'+money(tot)+'</b></div>'
+   +'<div class="paidbox"><div style="font-weight:700">¿Cuánto pagaste en caja? <span style="font-weight:500;color:var(--muted)">(opcional)</span></div><input class="inp" id="paid-s" data-id="'+h.id+'" inputmode="numeric" placeholder="$ según la boleta" style="width:100%;text-align:left;margin-top:6px;font-size:18px"><div class="row"><span>Descuento en caja</span><b id="paid-d">—</b></div><small>Mira la boleta o el voucher. Lo puedes cambiar después desde Historial.</small></div>'+body
    +'<div class="g2"><button class="btn s" data-a="close">Listo</button><button class="btn" data-a="sumexp" data-id="'+h.id+'">'+ic('out')+'Exportar</button></div>')}
 
 /* hoja: configuración */
@@ -925,7 +953,7 @@ function stylesXml(){
    +'<fonts count="6">'+f(11,'FF000000')+f(11,'FFFF0000')+f(11,'FFFFFFFF')+f(36,'FF000000',true)+f(36,'FF000000')+f(28,'FF000000')+'</fonts>'
    +'<fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC000"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF0070C0"/><bgColor indexed="64"/></patternFill></fill></fills>'
    +'<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>'+bd+'</borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-   +'<cellXfs count="9">'+xf(0,0,0,0)+xf(0,0,1,0)+xf(0,0,1,164)+xf(1,0,1,164)+xf(0,0,1,0)+xf(2,3,1,0)+xf(3,2,1,0,ctr)+xf(4,0,1,164,ctr)+xf(5,0,1,164,ctr)+'</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+   +'<cellXfs count="10">'+xf(0,0,0,0)+xf(0,0,1,0)+xf(0,0,1,164)+xf(1,0,1,164)+xf(0,0,1,0)+xf(2,3,1,0)+xf(3,2,1,0,ctr)+xf(4,0,1,164,ctr)+xf(5,0,1,164,ctr)+xf(0,0,1,14,ctr)+'</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
   return styles}
 function backupSheetXml(json){var rows='<row r="1"><c r="A1" t="inlineStr"><is><t>respaldo_app v1 — no borrar ni editar esta hoja</t></is></c></row>',r=2,i;for(i=0;i<json.length;i+=30000,r++)rows+='<row r="'+r+'"><c r="A'+r+'" t="inlineStr"><is><t xml:space="preserve">'+xe(json.slice(i,i+30000))+'</t></is></c></row>';return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+rows+'</sheetData></worksheet>'}
 function buildXlsxMulti(sheets,backup){
@@ -970,7 +998,7 @@ async function readXlsx(file){
     var rid=sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id')||sh.getAttribute('r:id');
     var path=relMap[rid];if(!path||!files[path])return;var rows={};
     Array.prototype.forEach.call(doc(files[path]).getElementsByTagName('c'),function(c){
-      var cr=colNum(c.getAttribute('r'));if(!cr||cr[0].length>1||'ABCEF'.indexOf(cr[0])<0)return;
+      var cr=colNum(c.getAttribute('r'));if(!cr||cr[0].length>1||'ABCDEF'.indexOf(cr[0])<0)return;
       var t=c.getAttribute('t'),v=c.getElementsByTagName('v')[0],val=null;
       if(t==='inlineStr')val=c.textContent;else if(v){var tx=v.textContent;val=t==='s'?shared[parseInt(tx,10)]:(t==='str'||t==='e'||t==='b')?tx:parseFloat(tx)}
       if(val===null||val===''||val===undefined)return;(rows[cr[1]]=rows[cr[1]]||{})[cr[0]]=val});
@@ -1012,6 +1040,20 @@ function openShareBox(blob,fn,done){
    +'<button class="btn" data-a="saveto">'+ic('out')+'Guardar en el dispositivo</button>'
    +'<p class="note" id="share-msg" style="margin-top:10px">El archivo queda en la carpeta Descargas, o donde elijas si tienes activado «Preguntar dónde guardar» en Chrome.</p>',true)}
 function pendDone(msg){var d=PEND&&PEND.done;PEND=null;closeOv();if(d)d();toast(msg)}
+function paySheetXml(){
+  var rows=S.history.filter(function(h){return h.sd||h.paid>0}).sort(function(a,b){return b.ts-a.ts});
+  if(!rows.length)return null;
+  var H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',t=function(r,v,st){return '<c r="'+r+'" t="inlineStr"'+(st?' s="'+st+'"':'')+'><is><t xml:space="preserve">'+xe(v)+'</t></is></c>'},n=function(r,v,st){return '<c r="'+r+'" s="'+st+'"><v>'+v+'</v></c>'};
+  var out='<row r="1">'+t('A1','Fecha',5)+t('B1','Compra',5)+t('C1','Pagado',5)+t('D1','Compra en la app',5)+t('F1','Cómo usar esta pestaña',0)+'</row>';
+  var notes=['Cada fila es un pago de Alvi.','Si «Compra en la app» está vacía, esa compra no tiene detalle de productos.','La compra más nueva está en la primera fila: copia solo esa fila a tu planilla maestra.','No reemplaces toda tu tabla con esta lista: aquí algunos pagos salen juntos o repartidos entre TP y Casa.'];
+  var last=rows.length+1;
+  var side=['','','','','','',['Total pagado','SUM(C2:C'+last+')'],['Sin detalle (columna D vacía)','SUMIF(D2:D'+last+',"",C2:C'+last+')'],['Ya en la app','G8-G9'],['Compras','COUNTA(B2:B'+last+')']];
+  rows.forEach(function(h,i){var r=i+2,d=new Date(h.ts),serial=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000)+25569;
+    var c=n('A'+r,serial,9)+t('B'+r,h.sd?(h.sdName||h.name):h.name,1)+n('C'+r,hTotal(h),2)+(h.sd?'<c r="D'+r+'" s="1"/>':t('D'+r,h.name,1));
+    var si=i;if(si>=1&&si<=4)c+=t('F'+r,notes[si-1],0);
+    if(i>=5&&i<=9&&Array.isArray(side[i])){c+=t('F'+r,side[i][0],0)+'<c r="G'+r+'" s="2"><f>'+xe(side[i][1])+'</f></c>'}
+    out+='<row r="'+r+'">'+c+'</row>'});
+  return H+'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="13" customWidth="1"/><col min="2" max="2" width="30" customWidth="1"/><col min="3" max="3" width="14" customWidth="1"/><col min="4" max="4" width="32" customWidth="1"/><col min="6" max="6" width="34" customWidth="1"/><col min="7" max="7" width="14" customWidth="1"/></cols><sheetData>'+out+'</sheetData></worksheet>'}
 function slug(s){return norm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'compra'}
 
 /* ---------- copiar ---------- */
@@ -1117,10 +1159,7 @@ var A={
    var r=await deliver(buildXlsxMulti([{xml:info,name:'Respaldo'}],bkJson()),'compra-mayorista-respaldo-'+slug(baseName())+'.xlsx');
    if(r==='descargado')toast('Se descargó el archivo (este navegador no permite abrir el menú de compartir aquí)');else if(r!=='cancelado')toast('Respaldo '+r);
    if(r!=='cancelado'&&r!=='error'){S.lastBackup=Date.now();save();if(view==='exportar')renderExport();renderNav()}},
- bkgo:function(){view='exportar';render();window.scrollTo(0,0)},
- bklater:function(){S.bkSnooze=Date.now()+86400000;save();render()},
  bkx:function(){S.bkInXlsx=!S.bkInXlsx;save();renderExport()},
- bkevery:function(t){S.bkEvery=parseInt(t.dataset.m,10);save();renderExport();renderNav()},
  xlrestore:function(){openOv('<div class="sh-hd"><h3>¿Restaurar desde el Excel?</h3></div><p class="note" style="margin:0">Reemplaza <b>todo</b> lo que hay hoy en la app (productos, compras guardadas y ajustes) por lo que trae el respaldo del archivo.</p><div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn d" data-a="xlrestoreok">Sí, restaurar</button></div>',true)},
  xlrestoreok:function(){try{var o=JSON.parse(BKX);if(!o||!o.items||(o.v!==1&&o.v!==2))throw new Error('Respaldo no válido');S=migrate(o);LM=AL=null;save();applyTheme();closeOv();render();toast('Respaldo restaurado')}catch(err){toast('No pude restaurar: '+(err.message||'respaldo dañado'))}},
  rk:function(t){RK=t.dataset.k;$('#rkbox').innerHTML=rankBox()},
@@ -1128,9 +1167,10 @@ var A={
  bar:function(t){CHSEL=CHSEL===t.dataset.id?-1:t.dataset.id;var cs=$('#chs'),x=cs?cs.scrollLeft:0;$('#chartbox').innerHTML=chartHTML();var n=$('#chs');if(n)n.scrollLeft=x},
  hopen:function(t){hOpen=hOpen===t.dataset.id?null:t.dataset.id;renderHist()},
  hdel:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;
-   openOv('<div class="sh-hd"><h3>¿Borrar esta compra?</h3></div><p class="note" style="margin:0"><b>'+esc(h.name)+'</b> · '+esc(h.tag)+'<br>'+h.lines.length+' productos · '+money(linesTotal(h.lines))+'</p><p class="note" style="margin:8px 0 0">Se quita del historial.</p>'
+   openOv('<div class="sh-hd"><h3>¿Borrar esta compra?</h3></div><p class="note" style="margin:0"><b>'+esc(h.name)+'</b> · '+esc(h.tag)+'<br>'+(h.sd?'sin detalle':h.lines.length+' productos')+' · '+money(hTotal(h))+'</p><p class="note" style="margin:8px 0 0">Se quita del historial.</p>'
     +'<div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn d" data-a="hdelok" data-id="'+h.id+'">Borrar</button></div>',true)},
  hdelok:function(t){closeOv();var id=t.dataset.id,i=S.history.findIndex(function(h){return h.id===id}),h=S.history[i];S.history.splice(i,1);LM=AL=null;hOpen=null;CHSEL=-1;save();renderHist();toast('Compra borrada',function(){S.history.splice(i,0,h);LM=AL=null;save();renderHist()})},
+ payapply:function(){if(!PAYX)return;var pr=applyPay(PAYX);PAYX=null;save();render();toast(payToast(pr)||'No había nada que aplicar')},
  hbase:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(C()?'Reemplaza el carro actual por esta compra.':'Inicia una compra con esta lista de productos.')+'</p><button class="btn" data-a="hbaseok" data-id="'+t.dataset.id+'">Sí, usar como base</button>';b.appendChild(d)}},
  hbaseok:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});
    if(!S.session)S.session={carts:[newCart(S.names.indexOf(h.tag)>=0?h.tag:S.names[0],{},S.budget)],active:0,multi:false};
@@ -1143,7 +1183,9 @@ var A={
  'xl-share':async function(){var sel=exSel(),sheets=[];
    sel.forEach(function(v){var inf=exInfoFor(v);if(!inf||!inf.lines.length)return;var nm=((EX.names&&EX.names[v])||'').trim()||inf.name;sheets.push({rows:exRows(inf.lines),name:nm,budget:inf.budget})});
    if(!sheets.length){toast('No hay productos para exportar');return}
-   var blob=buildXlsxMulti(sheets,S.bkInXlsx?bkJson():null),fn=sheets.length>1?'compras-'+slug(baseName())+'-'+sheets.length+'-hojas.xlsx':'compra-'+slug(sheets[0].name)+'.xlsx';
+   var fn=sheets.length>1?'compras-'+slug(baseName())+'-'+sheets.length+'-hojas.xlsx':'compra-'+slug(sheets[0].name)+'.xlsx',px=paySheetXml();
+   if(px)sheets.push({xml:px,name:'Pagado en caja'});
+   var blob=buildXlsxMulti(sheets,S.bkInXlsx?bkJson():null);
    openShareBox(blob,fn,function(){if(S.bkInXlsx){S.lastBackup=Date.now();save()}EX.sel=[];EX.multi=false;renderExport();renderNav()})},
  'xl-copy':function(){copyText(tsv(false),'Copiado. Pega en la celda A4 de tu hoja.')},
  'xl-copyv':function(){copyText(tsv(true),'Copiado. Pega en la celda B4 de tu hoja.')},
@@ -1164,8 +1206,9 @@ var A={
        if(p.xl>0&&p.xl!==linesTotal(p.lines))bad++;
        S.history.push({id:uid(),name:s.name.trim(),tag:m.tag,ts:m.ts,approx:true,lines:p.lines,budget:null,xlTotal:p.xl,src:'xl'});added++});
      S.history.sort(function(a,b){return b.ts-a.ts})}
+   var pr=PAYX?applyPay(PAYX):null;PAYX=null;
    S.items=list;S.last=last;LM=AL=null;save();closeOv();render();
-   toast(list.length+' productos cargados'+(added?' y '+added+' compras al historial':'')+(upd?(added?', ':' y ')+upd+(upd===1?' compra actualizada':' compras actualizadas'):'')+(bad?' ('+bad+' con diferencia de total)':''))}
+   toast((pr&&payToast(pr)?payToast(pr)+' · ':'')+list.length+' productos cargados'+(added?' y '+added+' compras al historial':'')+(upd?(added?', ':' y ')+upd+(upd===1?' compra actualizada':' compras actualizadas'):'')+(bad?' ('+bad+' con diferencia de total)':''))}
 };
 document.addEventListener('click',function(e){var t=e.target.closest('[data-a]');if(!t||t.tagName==='INPUT')return;var f=A[t.dataset.a];if(f)f(t,e)});
 
@@ -1173,6 +1216,7 @@ document.addEventListener('click',function(e){var t=e.target.closest('[data-a]')
 document.addEventListener('input',function(e){var t=e.target,id=t.id;
   if(id==='q'){Q=t.value;renderResults()}
   else if(id&&/^kg-[ab][pq]$/.test(id)&&KG){var kk=id.charAt(3);if(id.charAt(4)==='p'){var dd=num(t.value);KG[kk].p=dd?String(dd):'';t.value=dd?'$'+grp(dd):''}else{t.value=t.value.replace(/[^\d.,]/g,'');KG[kk].q=t.value}kgUpdate()}
+  else if((id==='paid-s'||id==='paid-h')&&t.dataset.id){var hh=S.history.find(function(x){return x.id===t.dataset.id});if(hh){var pd=num(t.value);hh.paid=pd>0?pd:null;t.value=pd?'$'+grp(pd):'';var pe=$('#paid-d');if(pe)pe.innerHTML=discTxt(hh.sd?0:linesTotal(hh.lines),hh.paid);save()}}
   else if(id==='f-name'&&SH){SH.name=t.value;updCalc()}
   else if(id==='f-price'&&SH){var d=num(t.value);SH.price=d?String(d):'';t.value=d?'$'+grp(d):'';updCalc()}
   else if(id==='r-bud'){var b=num(t.value),c=C();if(c){c.budget=b;S.budget=b;c.overShown=overOf(c)}t.value=b?'$'+grp(b):'';save();var g=function(x,y){return x},tt=totalsOf(c);updateTotalsOnly(t)}
@@ -1183,15 +1227,18 @@ document.addEventListener('input',function(e){var t=e.target,id=t.id;
 });
 function updateTotalsOnly(skip){updateTotals()}
 document.addEventListener('change',async function(e){var t=e.target;
+  if(t.id==='paid-s'||t.id==='paid-h'){var y0=window.scrollY;render();window.scrollTo(0,y0);return}
   if(t.classList&&t.classList.contains('sugck')){sugCount();return}
   if(t.dataset.a==='exsel'){var cur=exSel().slice(),k=cur.indexOf(t.value);if(t.checked&&k<0)cur.push(t.value);else if(!t.checked&&k>=0)cur.splice(k,1);EX.sel=cur;var y=window.scrollY;renderExport();window.scrollTo(0,y)}
   else if(t.id==='xl-file'&&t.files[0]){
     var box=$('#xl-box');box.innerHTML='<p class="note">Leyendo tu Excel…</p>';
     try{XL=await readXlsx(t.files[0]);BKX=null;var bi=XL.findIndex(function(x){return x.name==='respaldo_app'});if(bi>=0){var rs=XL[bi].rows,ks=Object.keys(rs).map(Number).sort(function(a,b){return a-b}).filter(function(k){return k>1});BKX=ks.map(function(k){return rs[k].A||''}).join('');XL.splice(bi,1)}
+      PAYX=null;var pi=XL.findIndex(function(x){return norm(x.name).replace(/\s+/g,'')==='pagadoencaja'});if(pi>=0){PAYX=XL[pi];XL.splice(pi,1)}
+      var pbx=PAYX?'<div class="card" style="margin:8px 0;box-shadow:none"><b>Este Excel trae «Pagado en caja»</b><p class="note" style="margin:4px 0 0">Se anota lo que pagaste en las compras que ya tienes y se agregan como «sin detalle» las que no estén.</p>'+(XL.length?'':'<button class="btn" data-a="payapply">Aplicar pagos</button>')+'</div>':'';
       var rbox=BKX?'<div class="card" style="margin:8px 0;box-shadow:none"><b>Este Excel trae un respaldo de la app</b><p class="note" style="margin:4px 0 0">Puedes recuperar todo (productos, compras guardadas y ajustes) o usar el archivo solo para cargar la lista y las compras.</p><button class="btn s" data-a="xlrestore">Restaurar todo desde el respaldo</button></div>':'';
       var def=XL.findIndex(function(s){return /oct|20\d\d/i.test(s.name)&&!/xx/i.test(s.name)&&sheetItems(s)});if(def<0)def=0;
-      if(!XL.length){box.innerHTML=rbox||'<p class="err">Ese archivo no tiene hojas con productos.</p>';return}
-      box.innerHTML=rbox+'<div class="card" style="margin:8px 0;box-shadow:none"><label class="fl" for="xl-sheet" style="margin-top:0">Hoja con la lista de productos</label><select class="inp" id="xl-sheet">'+XL.map(function(s,i){return '<option value="'+i+'"'+(i===def?' selected':'')+'>'+esc(s.name.trim())+'</option>'}).join('')+'</select>'
+      if(!XL.length){box.innerHTML=(rbox+pbx)||'<p class="err">Ese archivo no tiene hojas con productos.</p>';return}
+      box.innerHTML=rbox+pbx+'<div class="card" style="margin:8px 0;box-shadow:none"><label class="fl" for="xl-sheet" style="margin-top:0">Hoja con la lista de productos</label><select class="inp" id="xl-sheet">'+XL.map(function(s,i){return '<option value="'+i+'"'+(i===def?' selected':'')+'>'+esc(s.name.trim())+'</option>'}).join('')+'</select>'
        +'<button class="srow" data-a="xltog" aria-pressed="true"><span class="l">Importar compras al historial<small>Cada hoja con productos pasa a ser una compra antigua</small></span><span class="sw sw-s"></span></button><input type="checkbox" id="xl-hist" checked hidden><button class="srow" data-a="xltog" data-c="xl-upd" aria-pressed="true"><span class="l">Actualizar compras ya importadas<small>Si corregiste una hoja en tu Excel, se cambia también en el historial</small></span><span class="sw sw-s"></span></button><input type="checkbox" id="xl-upd" checked hidden>'
        +'<button class="btn" data-a="xlapply">Aplicar</button></div>'}
     catch(err){box.innerHTML='<p class="err">No pude leer ese archivo. ¿Es un .xlsx? ('+esc(err.message||err)+')</p>'}}
@@ -1222,6 +1269,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(e.key!=='Enter
 
 /* ---------- inicio ---------- */
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 applyTheme();updFsIcon();render();
 if(window.matchMedia)try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',function(){if(S.theme==='auto')applyTheme()})}catch(e){}
 })();
