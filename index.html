@@ -209,6 +209,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;letter-spacing:-.01em}
 .hist .hd b{display:block}.hist .hd em{font-style:normal;color:var(--muted);font-size:12.5px}
 .hist .am{font-family:var(--f-display);font-weight:700;color:var(--accent);white-space:nowrap}
 .tag{font-size:10.5px;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:2px 7px;margin-left:6px;font-weight:700;vertical-align:middle}
+.rkmore{display:block;width:100%;margin:6px 0 0;padding:8px;border:0;border-radius:12px;background:var(--surface2);color:var(--muted);font-size:18px;line-height:1;cursor:pointer}.rkrow[hidden]{display:none}
 .warn{font-size:12px;color:var(--bad);margin-top:3px}
 .paidbox{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}.paidbox .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:14px}.paidbox .row:first-child{margin-top:0}.paidbox input{width:150px;text-align:right;font-weight:800}.paidbox small{display:block;margin-top:8px;color:var(--muted);font-size:12px}.sdl{color:var(--lvy);font-weight:700}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -352,7 +353,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,HF='todas',RK='dinero',CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
+var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,HF='todas',RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
   var items=DEFAULT_ITEMS.map(function(n){return {id:uid(),name:n}});
@@ -570,7 +571,7 @@ function rankHTML(){
   if(!arr.length)return '<p class="empty">Cuando tengas compras guardadas, verás aquí tus productos de mayor a menor.</p>';
   arr.sort(function(a,b){return b[key]-a[key]||a.n.localeCompare(b.n,'es')});
   var col=['var(--budred)','var(--lvo)','var(--lvy)'];
-  var rows=arr.map(function(a,i){var c=i<3?col[i]:'',top=i<3;
+  var rows=arr.map(function(a,i){var c=i<3?col[i]:'',top=i<3,hid=i>=3&&!RKX;
     var badge='<span class="rkn" style="'+(top?'background:'+c+';color:#fff':'')+'">'+(i+1)+'</span>',sub,right;
     if(RK==='dinero'){var pct=a.times>1&&a.first>0?(a.last-a.first)/a.first*100:null;
       sub=a.times>1?'Precio por unidad: '+money(a.first)+' → '+money(a.last):'Un solo registro';
@@ -578,7 +579,8 @@ function rankHTML(){
       right='<div class="rkr"><b'+(top?' style="color:'+c+'"':'')+'>'+money(a.money)+'</b><div>'+pc+'</div></div>'}
     else{sub='Comprado en '+a.times+(a.times===1?' compra':' compras');
       right='<div class="rkr"><b'+(top?' style="color:'+c+'"':'')+'>'+grp(a.units)+'</b><div class="rkp" style="color:var(--muted)">'+(a.units===1?'unidad':'unidades')+'</div></div>'}
-    return '<div class="rkrow">'+badge+'<div class="rkt"><div class="rkname"'+(top?' style="color:'+c+'"':'')+'>'+esc(a.n)+'</div><div class="rksub">'+sub+'</div></div>'+right+'</div>'}).join('');
+    return '<div class="rkrow"'+(hid?' hidden':'')+'>'+badge+'<div class="rkt"><div class="rkname"'+(top?' style="color:'+c+'"':'')+'>'+esc(a.n)+'</div><div class="rksub">'+sub+'</div></div>'+right+'</div>'}).join('');
+  if(arr.length>3)rows+='<button class="rkmore" data-a="rkx" aria-expanded="'+RKX+'" aria-label="'+(RKX?'Ocultar el resto del ranking':'Ver el resto del ranking')+'">'+(RKX?'▴':'▾')+'</button>';
   return rows}
 function rankBox(){return '<div class="seg" role="group"><button data-a="rk" data-k="dinero" aria-pressed="'+(RK==='dinero')+'">Dinero</button><button data-a="rk" data-k="cantidad" aria-pressed="'+(RK==='cantidad')+'">Cantidad</button></div><p class="note" style="margin:8px 0 0">'+(RK==='dinero'?'Cuánto has gastado en cada producto y cómo cambió su precio por unidad desde el primer registro.':'Unidades compradas de cada producto (cajas × unidades por caja). Empates por orden alfabético.')+' Solo productos que sí compraste.</p><div style="margin-top:6px">'+rankHTML()+'</div>'}
 function yearsHTML(){
@@ -1089,7 +1091,7 @@ function setEdit(on){EDIT=on;var b=$('#btn-edit');b.setAttribute('aria-pressed',
     if(on){i.focus();i.select()}else i.blur()}
   if(on&&!i)toast('Toca un título para cambiarlo. El monto se edita en Buscar.')}
 var A={
- tab:function(t){view=t.dataset.v;hOpen=null;render();window.scrollTo(0,0)},
+ tab:function(t){view=t.dataset.v;hOpen=null;RKX=false;render();window.scrollTo(0,0)},
  theme:function(){S.theme=isDark()?'light':'dark';save();applyTheme()},
  fs:function(){toggleFs(true)},
  edit:function(){setEdit(!EDIT)},
@@ -1176,6 +1178,7 @@ var A={
  bkx:function(){S.bkInXlsx=!S.bkInXlsx;save();renderExport()},
  xlrestore:function(){openOv('<div class="sh-hd"><h3>¿Restaurar desde el Excel?</h3></div><p class="note" style="margin:0">Reemplaza <b>todo</b> lo que hay hoy en la app (productos, compras guardadas y ajustes) por lo que trae el respaldo del archivo.</p><div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn d" data-a="xlrestoreok">Sí, restaurar</button></div>',true)},
  xlrestoreok:function(){try{var o=JSON.parse(BKX);if(!o||!o.items||(o.v!==1&&o.v!==2))throw new Error('Respaldo no válido');S=migrate(o);LM=AL=null;save();applyTheme();closeOv();render();toast('Respaldo restaurado')}catch(err){toast('No pude restaurar: '+(err.message||'respaldo dañado'))}},
+ rkx:function(){RKX=!RKX;$('#rkbox').innerHTML=rankBox()},
  rk:function(t){RK=t.dataset.k;$('#rkbox').innerHTML=rankBox()},
  hf:function(t){HF=t.dataset.t;CHSEL=-1;renderHist()},
  bar:function(t){CHSEL=CHSEL===t.dataset.id?-1:t.dataset.id;var cs=$('#chs'),x=cs?cs.scrollLeft:0;$('#chartbox').innerHTML=chartHTML();var n=$('#chs');if(n)n.scrollLeft=x},
