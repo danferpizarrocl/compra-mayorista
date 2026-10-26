@@ -754,7 +754,6 @@ function drawItem(){
   if(l)h+='<div class="last"><span>Última vez: '+money(l.p)+' · caja de '+l.u+(l.b>1?' · '+l.b+' cajas':'')+' <small>('+esc(l.s)+')</small></span><button data-a="uselast">Usar</button></div>';
   h+='<label class="fl" for="f-price">Precio de 1 unidad</label><input class="inp big" id="f-price" inputmode="numeric" placeholder="$0" value="'+(SH.price?'$'+grp(num(SH.price)):'')+'" autocomplete="off"><div class="cmp" id="cmp"></div><div id="pal"></div>';
   h+='<button class="tgl'+(SH.boxed?'':' off')+'" data-a="boxed" aria-pressed="'+SH.boxed+'"><span>Compro por Mayor</span><span class="sw"></span></button>';
-  h+='<div class="mult" role="group" aria-label="Cuánto suma cada toque"><span>Cada toque suma</span>'+[1,2,3,5,10].map(function(m){return '<button class="chip" data-a="mult" data-m="'+m+'" aria-pressed="'+(SH.mult===m)+'">×'+m+'</button>'}).join('')+'</div>';
   h+='<div class="g2"><div><label class="fl" for="f-units">'+(SH.boxed?'Unidades por caja':'Unidades que llevo')+'</label><div class="stp"><button data-a="stp" data-f="units" data-d="-1" aria-label="Menos">'+ic('minus')+'</button><input class="inp big" id="f-units" readonly inputmode="none" value="'+esc(SH.units||'0')+'"><button data-a="stp" data-f="units" data-d="1" aria-label="Más">'+ic('plus')+'</button></div></div>';
   if(SH.boxed)h+='<div><label class="fl" for="f-boxes">¿Cuántas cajas?</label><div class="stp"><button data-a="stp" data-f="boxes" data-d="-1" aria-label="Menos">'+ic('minus')+'</button><input class="inp big" id="f-boxes" readonly inputmode="none" value="'+esc(SH.boxes||'1')+'"><button data-a="stp" data-f="boxes" data-d="1" aria-label="Más">'+ic('plus')+'</button></div></div>';
   h+='</div><div class="calc" id="calc"></div><div class="err" id="err" hidden></div>';
@@ -787,7 +786,7 @@ function removeFromCart(id){var cart=cartObj(),prev=cart[id];if(!prev)return;del
   toast(itemById(id).name.trim()+' quitado',function(){cart[id]=prev;save();refresh()})}
 
 /* contadores con botones: multiplicador y mantener apretado */
-function stepField(f,dir){var min=f==='boxes'?1:0,v=Math.max(min,num(SH[f])+dir*SH.mult);SH[f]=String(v);var el=$('#f-'+f);if(el)el.value=v;updCalc()}
+function stepField(f,dir){var min=f==='boxes'?1:0,v=Math.max(min,num(SH[f])+dir);SH[f]=String(v);var el=$('#f-'+f);if(el)el.value=v;updCalc()}
 var HOLD={t:null,n:0};
 function holdStop(){clearTimeout(HOLD.t);HOLD.t=null;HOLD.n=0}
 document.addEventListener('pointerdown',function(e){
@@ -1115,7 +1114,6 @@ var A={
  sort:function(t){SORT=t.dataset.s;renderCarro()},
  rm:function(t){removeFromCart(t.dataset.id)},
  boxed:function(){SH.boxed=!SH.boxed;if(SH.boxed&&!SH.boxes)SH.boxes='1';var y=$('.sheet').scrollTop;drawItem();$('.sheet').scrollTop=y},
- mult:function(t){SH.mult=parseInt(t.dataset.m,10);[].forEach.call(document.querySelectorAll('[data-a="mult"]'),function(b){b.setAttribute('aria-pressed',String(b===t))})},
  stp:function(t,e){if(e.detail===0&&SH)stepField(t.dataset.f,parseInt(t.dataset.d,10))},
  uselast:function(){var l=lastFor(itemById(SH.id));if(!l)return;SH.price=String(l.p);SH.units=String(l.u);SH.boxes=String(l.b||1);SH.boxed=l.u>1||l.b>1;drawItem()},
  itemok:itemOk,
