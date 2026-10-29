@@ -392,7 +392,7 @@ function itemById(id){return S.items.find(function(x){return x.id===id})}
 var sk=function(n){return norm(n).replace(/[\s\-_.]+/g,'')};
 function aliasMapFor(items){var m={};items.forEach(function(i){m[sk(i.name)]=sk(i.name)});items.forEach(function(i){(i.alias||[]).forEach(function(a){var k=sk(a);if(k&&!m[k])m[k]=sk(i.name)})});return m}
 function canon(n){if(!AL)AL=aliasMapFor(S.items);var k=sk(n);return AL[k]||k}
-function lm(){if(LM)return LM;LM={};S.history.forEach(function(h){h.lines.forEach(function(l){var k=canon(l.name),cur=LM[k];if(!cur||h.ts>cur.ts)LM[k]={ts:h.ts,p:l.price,u:l.units,b:l.boxed?l.boxes:1,s:h.name}})});return LM}
+function lm(){if(LM)return LM;LM={};S.history.forEach(function(h){if(h.occ)return;h.lines.forEach(function(l){var k=canon(l.name),cur=LM[k];if(!cur||h.ts>cur.ts)LM[k]={ts:h.ts,p:l.price,u:l.units,b:l.boxed?l.boxes:1,s:h.name}})});return LM}
 function lastFor(it){var r=lm()[canon(it.name)];if(r)return r;if(S.last){if(S.last[it.name])return S.last[it.name];var al=it.alias||[];for(var i=0;i<al.length;i++)if(S.last[al[i]])return S.last[al[i]]}return null}
 function curLines(c){c=c||C();if(!c)return [];return S.items.filter(function(i){return c.cart[i.id]}).map(function(i){var x=c.cart[i.id];return {name:i.name,price:x.price,boxed:x.boxed,units:x.units,boxes:x.boxes}})}
 function linesTotal(ls){return ls.reduce(function(a,l){return a+calc(l).total},0)}
@@ -402,7 +402,7 @@ function hTotal(h){return h.paid>0?+h.paid:linesTotal(h.lines)}
 function discTxt(g,p){if(!(p>0)||!(g>0))return '—';var d=g-p,pc=(Math.abs(d)/g*100).toFixed(1).replace('.',',');
   return d>0?'<span style="color:var(--lvg)">−'+money(d)+' ('+pc+' %)</span>':d<0?'<span style="color:var(--budred)">+'+money(-d)+' ('+pc+' % más)</span>':'sin descuento'}
 function baseName(){var d=new Date();return d.getFullYear()+' '+MES[d.getMonth()]}
-function cartSheetName(c){return baseName()+(S.session&&S.session.multi?' '+c.name:'')}
+function cartSheetName(c){return (S.session&&S.session.occ?'Ocasional ':'')+baseName()+(S.session&&S.session.multi?' '+c.name:'')}
 function chg(price,last){if(!last||!(price>0))return null;var d=price-last.p;if(d===0)return {k:'eq',t:'Igual que la última vez ('+money(last.p)+')',s:'='};
   var pct=Math.round(d/last.p*1000)/10,ps=String(Math.abs(pct)).replace('.',',');
   return {k:d>0?'up':'dn',t:(d>0?'▲ Subió ':'▼ Bajó ')+money(Math.abs(d))+' ('+(d>0?'+':'-')+ps+'%) vs última vez ('+money(last.p)+')',s:(d>0?'▲ ':'▼ ')+ps+'%'}}
@@ -433,7 +433,7 @@ function updateTotals(){
   var c=C(),t=totalsOf(c),budget=c?c.budget:S.budget,left=budget-t.total,pct=budget>0?t.total/budget*100:(t.total>0?100:0),bc=$('#bigcard');
   bc.hidden=!c;
   if(c){bc.classList.remove('lv-g','lv-y','lv-o','lv-r');bc.classList.add(pct>=100?'lv-r':pct>=75?'lv-o':pct>=50?'lv-y':'lv-g');
-    $('#r-ctx').textContent='Compra mayorista · '+c.name;
+    $('#r-ctx').textContent='Compra '+(S.session&&S.session.occ?'ocasional':'mayorista')+' · '+c.name;
     var many=S.session.carts.length>1;$('#r-all').hidden=!many;
     if(many){var ts=S.session.carts.map(function(x){return {n:x.name,t:totalsOf(x).total}});$('#r-alltot').textContent=money(ts.reduce(function(a,x){return a+x.t},0));$('#r-allsub').textContent=ts.map(function(x){return x.n+' '+money(x.t)}).join(' + ')}
     var lab=$('#r-lab');if(!EDIT||lab.dataset.m!=='e'){lab.dataset.m=EDIT?'e':'v';lab.innerHTML=ic('cart')+ttl('total','Total del carro')}
@@ -457,14 +457,14 @@ function startCard(){
   return '<section class="card startc"><h2>'+ic('flag')+ttl('nueva','Nueva compra')+'</h2><p>Arma tu carro, revisa cuánto llevas y al terminar queda guardado en el historial.</p><button class="btn" data-a="start">Iniciar compra</button></section>'}
 
 /* ---------- lista sugerida ---------- */
-function prevPurchase(c){var best=null;S.history.forEach(function(h){if(!h.sd&&h.tag===c.name&&(!best||h.ts>best.ts))best=h});if(!best)S.history.forEach(function(h){if(!h.sd&&(!best||h.ts>best.ts))best=h});return best}
+function prevPurchase(c){var best=null;S.history.forEach(function(h){if(!h.sd&&!h.occ&&h.tag===c.name&&(!best||h.ts>best.ts))best=h});if(!best)S.history.forEach(function(h){if(!h.sd&&!h.occ&&(!best||h.ts>best.ts))best=h});return best}
 function sugFrom(lines){var out=[];lines.forEach(function(l){var it=S.items.find(function(x){return canon(x.name)===canon(l.name)});if(!it){it={id:uid(),name:String(l.name).trim()};S.items.push(it);AL=null}
   if(out.some(function(o){return o.id===it.id}))return;out.push({id:it.id,units:l.units,boxed:!!l.boxed,boxes:l.boxes||1})});return out}
 function qtyTxt(l){return l.boxed?l.boxes+(l.boxes===1?' caja':' cajas')+' × '+l.units+' un':l.units+' un'}
 function sugCount(){var all=document.querySelectorAll('.sugck'),n=document.querySelectorAll('.sugck:checked').length,tg=$('#sug-tg'),ok=$('#sug-ok'),nt=$('#sug-n');if(!nt)return;
   nt.textContent=n+' de '+all.length+' elegidos';ok.textContent='Usar los elegidos ('+n+')';ok.disabled=!n;var allOn=n===all.length&&n>0;tg.textContent=allOn?'Quitar todo':'Seleccionar todo';tg.setAttribute('aria-pressed',String(allOn))}
 function sugCard(c){
-  if(c.sugOff)return '';
+  if(c.sugOff||(S.session&&S.session.occ))return '';
   if(c.sug===undefined){if(Object.keys(c.cart).length)return '';var h=prevPurchase(c);if(!h||!h.lines.length)return '';
     var rows=h.lines.slice(0,6).map(function(l){return '<div class="cl"><div class="tx"><b>'+esc(l.name.trim())+'</b><em>'+qtyTxt(l)+' · último '+money(l.price)+'</em></div></div>'}).join('');
     return '<section class="card sugc"><h2>'+ic('rewind')+ttl('sugerida','Partir con la compra anterior')+'</h2><div class="last" style="margin-top:0"><span><b style="color:var(--ink)">'+esc(h.name)+'</b> · '+esc(h.tag)+'<br>'+h.lines.length+' productos · '+money(linesTotal(h.lines))+'</span></div>'
@@ -544,7 +544,7 @@ function renderCarro(){
 
 /* ---------- vista: Historial ---------- */
 function tagColor(tag){var i=S.names.indexOf(tag);return i===0?'var(--s1)':i===1?'var(--s2)':'var(--s3)'}
-function histList(){return S.history.filter(function(h){return HF==='todas'||h.tag===HF})}
+function histList(){return S.history.filter(function(h){return HF==='ocasionales'?!!h.occ:(!h.occ&&(HF==='todas'||h.tag===HF))})}
 function niceStep(max){var p=Math.pow(10,Math.floor(Math.log10(max||1))),c=[1,2,2.5,5,10];for(var i=0;i<c.length;i++){if(max/(c[i]*p)<=4)return c[i]*p}return 10*p}
 function kfmt(v){return v===0?'$0':v>=1e6?'$'+(v/1e6).toString().replace('.',',')+' M':'$'+(v/1000)+' mil'}
 function barPath(x,y,w,h,r){r=Math.max(0,Math.min(r,h,w/2));return 'M'+x+','+(y+h)+'V'+(y+r)+'Q'+x+','+y+' '+(x+r)+','+y+'H'+(x+w-r)+'Q'+(x+w)+','+y+' '+(x+w)+','+(y+r)+'V'+(y+h)+'Z'}
@@ -596,31 +596,31 @@ function yearsHTML(){
     return '<div style="padding:9px 2px;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span><b style="font:800 18px var(--f-display)">'+y+'</b>'+(y===cur?'<span class="tag">en curso</span>':'')+'<br><span class="rksub">'+a.n+(a.n===1?' compra':' compras')+'</span>'+vs+'</span><b style="font:800 18px var(--f-display);'+(top?'color:var(--accent)':'')+'">'+money(a.t)+'</b></div>'
      +'<div style="height:6px;border-radius:4px;background:var(--surface2);margin-top:7px"><i style="display:block;height:100%;border-radius:4px;width:'+Math.max(2,Math.round(a.t/max*100))+'%;background:var(--accent)"></i></div></div>'}).join('')}
 function renderHist(){
-  var tags=['todas'];S.names.forEach(function(n){tags.push(n)});S.history.forEach(function(h){if(tags.indexOf(h.tag)<0)tags.push(h.tag)});
-  var chips='<div class="chips" style="margin-top:0">'+tags.map(function(t){return '<button class="chip" data-a="hf" data-t="'+esc(t)+'" aria-pressed="'+(HF===t)+'">'+(t==='todas'?'Todas':esc(t))+'</button>'}).join('')+'</div>';
+  var tags=['todas'];S.names.forEach(function(n){tags.push(n)});S.history.forEach(function(h){if(!h.occ&&tags.indexOf(h.tag)<0)tags.push(h.tag)});if(S.history.some(function(h){return h.occ})||HF==='ocasionales')tags.push('ocasionales');
+  var chips='<div class="chips" style="margin-top:0">'+tags.map(function(t){return '<button class="chip" data-a="hf" data-t="'+esc(t)+'" aria-pressed="'+(HF===t)+'">'+(t==='todas'?'Todas':t==='ocasionales'?'Ocasionales':esc(t))+'</button>'}).join('')+'</div>';
   var cur='';
   if(S.session)cur='<section class="card"><h2>'+ic('cart')+ttl('encurso','En curso')+'</h2>'+S.session.carts.map(function(c){var t=totalsOf(c);return '<div class="hist"><div class="hd"><span><b>'+esc(c.name)+'<span class="tag">en curso</span></b><em>'+t.count+' productos</em></span><span class="am">'+money(t.total)+'</span></div></div>'}).join('')+'</section>';
   var list=histList();
   var rows=list.map(function(h){var open=hOpen===h.id,tot=hTotal(h),gd=gondTotal(h);
     var pbox=open?'<div class="paidbox">'+(h.sd?'':'<div class="row"><span>Precio de lista</span><b>'+money(gd)+'</b></div>')+'<div class="row"><span>Pagado en caja</span><input class="inp" id="paid-h" data-id="'+h.id+'" inputmode="numeric" placeholder="$ según la boleta" value="'+(h.paid>0?'$'+grp(h.paid):'')+'"></div>'+(h.sd?'':'<div class="row"><span>Descuento</span><b id="paid-d">'+discTxt(gd,h.paid)+'</b></div><small>Si lo dejas vacío, se usa el precio de lista.</small>')+'</div>':'';
     var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox
-      +'<div class="acts">'+(h.sd?'':'<button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button><button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
+      +'<div class="acts">'+(h.sd||h.occ?'':'<button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button><button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
     var diff=!h.sd&&h.xlTotal>0&&h.xlTotal!==gd?'<div class="warn">En tu Excel este total es '+money(h.xlTotal)+'</div>':'';
     return '<div class="hist"><button class="hd" data-a="hopen" data-id="'+h.id+'" aria-expanded="'+open+'"><span><b>'+esc(h.name)+'<span class="tag" style="background:transparent;border:1px solid '+tagColor(h.tag)+';color:var(--ink)">'+esc(h.tag)+'</span></b><em>'+(h.approx?fmonth(h.ts):fdate(h.ts))+' · '+(h.sd?'<span class="sdl">sin detalle</span>':h.lines.length+' productos')+'</em>'+diff+'</span><span class="am" style="text-align:right">'+money(tot)+(!h.sd&&h.paid>0&&h.paid!==gd?'<br><small style="font-weight:500;color:var(--muted);font-size:11.5px">precio de lista '+money(gd)+'</small>':'')+'</span></button>'+body+'</div>'}).join('');
   var hsum=list.reduce(function(a,h){return a+hTotal(h)},0),hgon=list.reduce(function(a,h){return a+gondTotal(h)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
   var ymin=yrs.length?Math.min.apply(null,yrs):0,ymax=yrs.length?Math.max.apply(null,yrs):0;
   var hsub=list.length+' compra'+(list.length===1?'':'s')+(yrs.length?' · '+(ymin===ymax?ymin:ymin+'–'+ymax):'')+(HF==='todas'?'':' · '+esc(HF));
   var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total')+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span>'+(hgon!==hsum?'<div class="allc"><div class="row"><span>Precio de lista</span><b>'+money(hgon)+'</b></div><div class="row"><span>Pagado en caja</span><b>'+money(hsum)+'</b></div><div class="row"><span>Descuentos</span><b style="color:var(--lvg)">'+(hgon>hsum?'−':'+')+money(Math.abs(hgon-hsum))+'</b></div><small>Los descuentos de caja son la diferencia entre ambos.</small></div>':'')+'</div>';
-  $('#main').innerHTML='<div style="height:0"></div>'+totc+chips+cur+'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
+  $('#main').innerHTML='<div style="height:0"></div>'+totc+chips+cur+(HF==='ocasionales'?'<p class="note" style="margin:0 0 12px">Las compras ocasionales van aparte: no suman al total, a los gráficos ni al ranking, y no se exportan.</p>':'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
    +'<section class="card"><h2>'+ic('cal')+ttl('anual','Total por año')+(HF==='todas'?'':' · '+esc(HF))+'</h2>'+yearsHTML()+'</section>'
-   +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(HF==='todas'?'':' · '+esc(HF))+'</h2><div id="rkbox">'+rankBox()+'</div></section>'
+   +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(HF==='todas'?'':' · '+esc(HF))+'</h2><div id="rkbox">'+rankBox()+'</div></section>')
    +'<section class="card"><h2>'+ic('list')+ttl('guardadas','Compras guardadas')+' · '+list.length+'</h2>'+(rows||'<p class="empty">Aún no hay compras guardadas.</p>')+'</section>';
   updateTotals();watchBig();
   var cs=$('#chs');if(cs)cs.scrollLeft=cs.scrollWidth;
 }
 
 /* ---------- vista: Exportar ---------- */
-function exSources(){var a=[];if(S.session)S.session.carts.forEach(function(c){a.push({v:'cur:'+c.id,label:'Carro '+c.name+' (en curso)'})});S.history.forEach(function(h){if(!h.sd)a.push({v:h.id,label:h.name+' · '+h.tag})});return a}
+function exSources(){var a=[];if(S.session&&!S.session.occ)S.session.carts.forEach(function(c){a.push({v:'cur:'+c.id,label:'Carro '+c.name+' (en curso)'})});S.history.forEach(function(h){if(!h.sd&&!h.occ)a.push({v:h.id,label:h.name+' · '+h.tag})});return a}
 function exInfoFor(src){
   if(src.indexOf('cur:')===0){var c=S.session&&S.session.carts.find(function(x){return 'cur:'+x.id===src});return c?{lines:curLines(c),name:cartSheetName(c),budget:c.budget}:null}
   var h=S.history.find(function(x){return x.id===src});return h?{lines:h.lines,name:h.name,budget:h.budget==null?S.budget:h.budget}:null}
@@ -730,7 +730,9 @@ function calcKey(v){var e=CALC.e;
     if(v==='.'){var last=e.split(/[+\-*\/]/).pop();if(last.indexOf('.')>=0)return;CALC.e=e+(last===''?'0.':'.')}
     else{var l2=e.split(/[+\-*\/]/).pop();if(l2==='0')CALC.e=e.slice(0,-1)+v;else CALC.e=e+v}}
   calcShow()}
-function openStart(){openOv(shd('Iniciar compra')+'<p class="note" style="margin:0">¿Cuántos carros vas a armar?</p>'
+function openStart(){openOv(shd('Iniciar compra')+'<p class="note" style="margin:0">¿Qué tipo de compra es?</p>'
+  +'<div class="choice" style="grid-template-columns:1fr 1fr"><button data-a="startmay">Mayorista<small>suma al historial y gráficos</small></button><button data-a="startocc">Ocasional<small>queda aparte</small></button></div>',true)}
+function openStartMay(){openOv(shd('Iniciar compra')+'<p class="note" style="margin:0">¿Cuántos carros vas a armar?</p>'
   +'<div class="choice"><button data-a="startn" data-n="1">1<small>un carro</small></button><button data-a="startn" data-n="2">2<small>dos carros</small></button><button data-a="startn" data-n="3">3<small>tres carros</small></button></div>'
   +'<button class="btn s" data-a="startmore">Otra cantidad</button>',true)}
 function openMore(){openOv(shd('¿Cuántos carros?')+'<div class="stp" style="margin-top:12px"><button data-a="cnt" data-d="-1" aria-label="Menos">'+ic('minus')+'</button><input class="inp big" id="cnt" readonly inputmode="none" value="4"><button data-a="cnt" data-d="1" aria-label="Más">'+ic('plus')+'</button></div>'
@@ -743,9 +745,9 @@ function openStartN(n){
   var opt=function(sel){return S.names.map(function(nm,i){return '<option value="'+i+'"'+(i===sel?' selected':'')+'>'+esc(nm)+'</option>'}).join('')},h='';
   for(var k=0;k<n;k++)h+='<label class="fl" for="sn'+k+'"'+(k?'':' style="margin-top:0"')+'>Carro '+(k+1)+'</label><select class="inp sn" id="sn'+k+'">'+opt(Math.min(k,S.names.length-1))+'</select>';
   openOv(shd(n>1?'¿Para quiénes son?':'¿Para quién es?')+h+'<div class="err" id="serr" hidden></div><div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn" data-a="startgo">Iniciar</button></div>',true)}
-function startSession(names){
-  S.session={carts:names.map(function(n){return newCart(n,{},S.budget)}),active:0,multi:names.length>1};S.demo=false;EDIT=false;$('#btn-edit').setAttribute('aria-pressed','false');
-  save();closeOv();view='comprar';render();window.scrollTo(0,0);toast(names.length>1?'Compra iniciada: '+names.join(', '):'Compra iniciada')}
+function startSession(names,occ){
+  S.session={carts:names.map(function(n){return newCart(n,{},S.budget)}),active:0,multi:names.length>1,occ:!!occ};S.demo=false;EDIT=false;$('#btn-edit').setAttribute('aria-pressed','false');
+  save();closeOv();view='comprar';render();window.scrollTo(0,0);toast(occ?'Compra ocasional iniciada':names.length>1?'Compra iniciada: '+names.join(', '):'Compra iniciada')}
 
 /* hoja: producto */
 function openItem(id,newName){setSch(false);
@@ -828,7 +830,8 @@ function openFinish(){
 function finishOk(){
   var c=C();if(!c)return;var ls=curLines(c);if(!ls.length)return;
   var h={id:uid(),name:($('#fin-name').value||'').trim()||cartSheetName(c),tag:c.name,ts:Date.now(),approx:false,lines:ls,budget:c.budget,src:'app'};
-  var prev=null;S.history.forEach(function(x){if(x.tag===c.name&&(!prev||x.ts>prev.ts))prev=x});S.history.unshift(h);LM=AL=null;S.session.carts.splice(S.session.active,1);S.demo=false;
+  if(S.session.occ){h.occ=true;h.tag='Ocasional'}
+  var prev=null;S.history.forEach(function(x){if(x.tag===h.tag&&!!x.occ===!!h.occ&&(!prev||x.ts>prev.ts))prev=x});S.history.unshift(h);LM=AL=null;S.session.carts.splice(S.session.active,1);S.demo=false;
   if(!S.session.carts.length){S.session=null;S.calcHist=[]}else S.session.active=0;
   save();closeOv();render();window.scrollTo(0,0);
   openSummary(h,prev)}
@@ -851,7 +854,7 @@ function applyPay(sh){
       if(ex){if(ex.paid!==paid){ex.paid=paid;res.upd++}}
       else{S.history.push({id:uid(),name:nmx,sdName:nm||'Compra',tag:SD_TAG,ts:ts,approx:false,lines:[],budget:null,sd:true,sdKey:key,paid:paid,src:'xl'});res.added++}
       return}
-    var hs=tg.map(function(t){return S.history.find(function(h){return !h.sd&&sk(h.name)===sk(t)})});
+    var hs=tg.map(function(t){return S.history.find(function(h){return !h.sd&&!h.occ&&sk(h.name)===sk(t)})});
     if(hs.some(function(h){return !h})){tg.forEach(function(t,i){if(!hs[i]&&res.missing.indexOf(t)<0)res.missing.push(t)});return}
     var gs=hs.map(function(h){return linesTotal(h.lines)}),sum=gs.reduce(function(a,b){return a+b},0),left=paid;
     hs.forEach(function(h,i){var part=i===hs.length-1?left:Math.round(sum>0?paid*gs[i]/sum:paid/hs.length);left-=part;pm[h.id]=(pm[h.id]||0)+part})});
@@ -1047,7 +1050,7 @@ function openShareBox(blob,fn,done){
    +'<p class="note" id="share-msg" style="margin-top:10px">El archivo queda en la carpeta Descargas, o donde elijas si tienes activado «Preguntar dónde guardar» en Chrome.</p>',true)}
 function pendDone(msg){var d=PEND&&PEND.done;PEND=null;closeOv();if(d)d();toast(msg)}
 function paySheetXml(){
-  var rows=S.history.filter(function(h){return h.sd||h.paid>0}).sort(function(a,b){return b.ts-a.ts});
+  var rows=S.history.filter(function(h){return !h.occ&&(h.sd||h.paid>0)}).sort(function(a,b){return b.ts-a.ts});
   if(!rows.length)return null;
   var H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',t=function(r,v,st){return '<c r="'+r+'" t="inlineStr"'+(st?' s="'+st+'"':'')+'><is><t xml:space="preserve">'+xe(v)+'</t></is></c>'},n=function(r,v,st){return '<c r="'+r+'" s="'+st+'"><v>'+v+'</v></c>'};
   var out='<row r="1">'+t('A1','Fecha',5)+t('B1','Compra',5)+t('C1','Pagado',5)+t('D1','Compra en la app',5)+t('F1','Cómo usar este archivo (guía completa)',0)+'</row>';
@@ -1107,6 +1110,8 @@ var A={
  start:function(){openStart()},
  startn:function(t){var n=t.dataset.n==='x'?parseInt($('#cnt').value,10):parseInt(t.dataset.n,10);startPick(n)},
  startmore:function(){openMore()},
+ startmay:function(){openStartMay()},
+ startocc:function(){startSession([S.names[0]||'Casa'],true)},
  cnt:function(t){var i=$('#cnt'),v=Math.max(1,Math.min(6,(parseInt(i.value,10)||1)+parseInt(t.dataset.d,10)));i.value=v},
  mknames:function(t){var n=parseInt(t.dataset.n,10),vals=[].map.call(document.querySelectorAll('.nnew'),function(x){return x.value.trim()}),e=$('#serr'),seen={};
    S.names.forEach(function(x){seen[norm(x)]=1});
