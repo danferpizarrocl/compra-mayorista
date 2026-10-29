@@ -445,7 +445,7 @@ function updateTotals(){
   else $('#sub').textContent='Sin compra en curso';
   $('#demo').hidden=!(S.demo&&c);
   var nb=$('#nav .badge');if(nb)nb.textContent=t.count;
-  var pr=$('#r-prod');if(pr){pr.textContent=t.count+' / '+S.items.length;$('#r-box').textContent=t.boxes;var bi=$('#r-bud');if(bi&&document.activeElement!==bi)bi.value='$'+grp(budget)}
+  var pr=$('#r-prod');if(pr){pr.textContent=t.count+' / '+S.items.length;$('#r-box').textContent=t.boxes;var rb=$('#r-box').parentNode;if(rb)rb.hidden=!!(S.session&&S.session.occ);var bi=$('#r-bud');if(bi&&document.activeElement!==bi)bi.value='$'+grp(budget)}
 }
 function renderNav(){
   var tabs=[['comprar','Buscar','search'],['carro','Carro','cart'],['historial','Historial','clock'],['calc','Calc.','calc'],['exportar','Exportar','out']];
@@ -752,7 +752,7 @@ function startSession(names,occ){
 /* hoja: producto */
 function openItem(id,newName){setSch(false);
   var c=C();if(!c)return;var it=id?itemById(id):null,ex=id&&c.cart[id],sg=!ex&&id&&c.sug&&c.sug.find(function(z){return z.id===id});
-  SH={id:id||null,isNew:!id,name:it?it.name:(newName||''),price:ex?String(ex.price):'',boxed:ex?ex.boxed:(sg?sg.boxed:true),units:ex?String(ex.units):(sg?String(sg.units):''),boxes:ex?String(ex.boxes):(sg?String(sg.boxes):'1'),mult:1,sg:!!sg};
+  SH={id:id||null,isNew:!id,name:it?it.name:(newName||''),price:ex?String(ex.price):'',boxed:(S.session&&S.session.occ)?false:ex?ex.boxed:(sg?sg.boxed:true),units:ex?String(ex.units):(sg?String(sg.units):''),boxes:ex?String(ex.boxes):(sg?String(sg.boxes):'1'),mult:1,sg:!!sg};
   drawItem();setTimeout(function(){var f=$(SH.isNew&&!SH.name?'#f-name':'#f-price');if(f)f.focus()},60)}
 function drawItem(){
   var l=SH.id?lastFor(itemById(SH.id)):null,ex=SH.id&&cartObj()[SH.id];
@@ -761,7 +761,7 @@ function drawItem(){
   if(SH.isNew)h+='<label class="fl" for="f-name" style="margin-top:0">Nombre del producto</label><input class="inp" id="f-name" value="'+esc(SH.name)+'" autocomplete="off" placeholder="Ej: Pan de molde">';
   if(l)h+='<div class="last"><span>Última vez: '+money(l.p)+' · caja de '+l.u+(l.b>1?' · '+l.b+' cajas':'')+' <small>('+esc(l.s)+')</small></span><button data-a="uselast">Usar</button></div>';
   h+='<label class="fl" for="f-price">Precio de 1 unidad</label><input class="inp big" id="f-price" inputmode="numeric" placeholder="$0" value="'+(SH.price?'$'+grp(num(SH.price)):'')+'" autocomplete="off"><div class="cmp" id="cmp"></div><div id="pal"></div>';
-  h+='<button class="tgl'+(SH.boxed?'':' off')+'" data-a="boxed" aria-pressed="'+SH.boxed+'"><span>Compro por Mayor</span><span class="sw"></span></button>';
+  if(!(S.session&&S.session.occ))h+='<button class="tgl'+(SH.boxed?'':' off')+'" data-a="boxed" aria-pressed="'+SH.boxed+'"><span>Compro por Mayor</span><span class="sw"></span></button>';
   h+='<div class="g2'+(SH.boxed?'':' one')+'"><div><label class="fl" for="f-units">'+(SH.boxed?'Unidades por caja':'Unidades que llevo')+'</label><div class="stp"><button data-a="stp" data-f="units" data-d="-1" aria-label="Menos">'+ic('minus')+'</button><input class="inp big" id="f-units" readonly inputmode="none" value="'+esc(SH.units||'0')+'"><button data-a="stp" data-f="units" data-d="1" aria-label="Más">'+ic('plus')+'</button></div></div>';
   if(SH.boxed)h+='<div><label class="fl" for="f-boxes">¿Cuántas cajas?</label><div class="stp"><button data-a="stp" data-f="boxes" data-d="-1" aria-label="Menos">'+ic('minus')+'</button><input class="inp big" id="f-boxes" readonly inputmode="none" value="'+esc(SH.boxes||'1')+'"><button data-a="stp" data-f="boxes" data-d="1" aria-label="Más">'+ic('plus')+'</button></div></div>';
   h+='</div><div class="calc" id="calc"></div><div class="err" id="err" hidden></div>';
