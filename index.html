@@ -612,9 +612,9 @@ function renderHist(){
   var ymin=yrs.length?Math.min.apply(null,yrs):0,ymax=yrs.length?Math.max.apply(null,yrs):0;
   var hsub=list.length+' compra'+(list.length===1?'':'s')+(yrs.length?' · '+(ymin===ymax?ymin:ymin+'–'+ymax):'')+(HF==='todas'?'':' · '+esc(HF));
   var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total')+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span>'+(hgon!==hsum?'<div class="allc"><div class="row"><span>Precio de lista</span><b>'+money(hgon)+'</b></div><div class="row"><span>Pagado en caja</span><b>'+money(hsum)+'</b></div><div class="row"><span>Descuentos</span><b style="color:var(--lvg)">'+(hgon>hsum?'−':'+')+money(Math.abs(hgon-hsum))+'</b></div><small>Los descuentos de caja son la diferencia entre ambos.</small></div>':'')+'</div>';
-  $('#main').innerHTML='<div style="height:0"></div>'+totc+chips+cur+(HF==='ocasionales'?'<p class="note" style="margin:0 0 12px">Las compras ocasionales van aparte: no suman al total, a los gráficos ni al ranking, y no se exportan.</p>':'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
-   +'<section class="card"><h2>'+ic('cal')+ttl('anual','Total por año')+(HF==='todas'?'':' · '+esc(HF))+'</h2>'+yearsHTML()+'</section>'
-   +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(HF==='todas'?'':' · '+esc(HF))+'</h2><div id="rkbox">'+rankBox()+'</div></section>')
+  $('#main').innerHTML='<div style="height:0"></div>'+totc+chips+cur+(HF==='ocasionales'&&!list.length?'<p class="note" style="margin:0 0 12px">Aquí van tus compras ocasionales, aparte de todo lo mayorista: sus propios totales, gráficos y ranking.</p>':'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+(HF==='ocasionales'?' · ocasionales':'')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
+   +'<section class="card"><h2>'+ic('cal')+ttl('anual','Total por año')+(HF==='todas'?'':' · '+(HF==='ocasionales'?'ocasionales':esc(HF)))+'</h2>'+yearsHTML()+'</section>'
+   +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(HF==='todas'?'':' · '+(HF==='ocasionales'?'ocasionales':esc(HF)))+'</h2><div id="rkbox">'+rankBox()+'</div></section>')
    +'<section class="card"><h2>'+ic('list')+ttl('guardadas','Compras guardadas')+' · '+list.length+'</h2>'+(rows||'<p class="empty">Aún no hay compras guardadas.</p>')+'</section>';
   updateTotals();watchBig();
   var cs=$('#chs');if(cs)cs.scrollLeft=cs.scrollWidth;
@@ -907,7 +907,7 @@ function openSettings(){
   +'<div class="sec">Reiniciar</div><button class="btn d" data-a="clearcart">Vaciar el carro actual</button>'
   +'<button class="btn d hold" id="rst" aria-label="Reiniciar toda la aplicación. Mantén apretado 2 segundos"><span class="fill"></span><span class="lbl">'+ic('trash')+'Reiniciar toda la aplicación · mantén 2 s</span></button>'
   +'<p class="note">Todo se guarda solo en este celular. Haz un respaldo (.xlsx) desde Exportar de vez en cuando.</p>'
-  +'<p class="note" style="text-align:center;margin-top:4px">Versión 36</p>';
+  +'<p class="note" style="text-align:center;margin-top:4px">Versión 37</p>';
   openOv(h);
 }
 function openList(){
