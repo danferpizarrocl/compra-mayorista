@@ -19,7 +19,7 @@
   --bg:#eef1f5;--surface:#ffffff;--surface2:#f3f6fa;--ink:#101a2b;--muted:#5b6a82;--line:#dbe2ec;
   --accent:#0070c0;--accent-ink:#ffffff;--accent-soft:#e1effa;
   --lvg:#15803d;--lvy:#a87400;--lvo:#d1560a;--budred:#d00000;--gold:#ffc000;--gold-ink:#3a2a00;--bad:#c62828;--bad-soft:#fde8e8;--ok:#177a4c;
-  --s1:#0070c0;--s2:#c46a00;--s3:#7b8799;
+  --s1:#0070c0;--s2:#c46a00;--s3:#7b8799;--s4:#d9534f;
   --shadow:0 1px 2px rgba(16,26,43,.06),0 6px 18px rgba(16,26,43,.06);
   --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;--f-body:'Instrument Sans','Segoe UI',system-ui,sans-serif;
 }
@@ -27,12 +27,12 @@
   --bg:#0b1220;--surface:#141d2f;--surface2:#1a2540;--ink:#e8eef9;--muted:#95a3bc;--line:#25314c;
   --accent:#4aa8f2;--accent-ink:#04182b;--accent-soft:#123049;
   --lvg:#4ade80;--lvy:#facc15;--lvo:#fb923c;--budred:#ff4d4d;--gold:#ffc83d;--gold-ink:#2e2100;--bad:#ff8080;--bad-soft:#3a1a22;--ok:#4cd69a;
-  --s1:#3b9be6;--s2:#d07f28;--s3:#8c9ab1;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
+  --s1:#3b9be6;--s2:#d07f28;--s3:#8c9ab1;--s4:#f0716d;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0b1220;--surface:#141d2f;--surface2:#1a2540;--ink:#e8eef9;--muted:#95a3bc;--line:#25314c;
   --accent:#4aa8f2;--accent-ink:#04182b;--accent-soft:#123049;
   --lvg:#4ade80;--lvy:#facc15;--lvo:#fb923c;--budred:#ff4d4d;--gold:#ffc83d;--gold-ink:#2e2100;--bad:#ff8080;--bad-soft:#3a1a22;--ok:#4cd69a;
-  --s1:#3b9be6;--s2:#d07f28;--s3:#8c9ab1;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}
+  --s1:#3b9be6;--s2:#d07f28;--s3:#8c9ab1;--s4:#f0716d;--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
@@ -546,7 +546,7 @@ function renderCarro(){
 }
 
 /* ---------- vista: Historial ---------- */
-function tagColor(tag){var i=S.names.indexOf(tag);return i===0?'var(--s1)':i===1?'var(--s2)':'var(--s3)'}
+function tagColor(tag){if(tag==='Ocasional')return 'var(--s4)';var i=S.names.indexOf(tag);return i===0?'var(--s1)':i===1?'var(--s2)':'var(--s3)'}
 function histList(){return S.history.filter(function(h){return HF==='ocasionales'?!!h.occ:(!h.occ&&(HF==='todas'||h.tag===HF))})}
 function niceStep(max){var p=Math.pow(10,Math.floor(Math.log10(max||1))),c=[1,2,2.5,5,10];for(var i=0;i<c.length;i++){if(max/(c[i]*p)<=4)return c[i]*p}return 10*p}
 function kfmt(v){return v===0?'$0':v>=1e6?'$'+(v/1e6).toString().replace('.',',')+' M':'$'+(v/1000)+' mil'}
@@ -909,7 +909,7 @@ function openSettings(){
   +'<div class="sec">Reiniciar</div><button class="btn d" data-a="clearcart">Vaciar el carro actual</button>'
   +'<button class="btn d hold" id="rst" aria-label="Reiniciar toda la aplicación. Mantén apretado 2 segundos"><span class="fill"></span><span class="lbl">'+ic('trash')+'Reiniciar toda la aplicación · mantén 2 s</span></button>'
   +'<p class="note">Todo se guarda solo en este celular. Haz un respaldo (.xlsx) desde Exportar de vez en cuando.</p>'
-  +'<p class="note" style="text-align:center;margin-top:4px">Versión 39</p>';
+  +'<p class="note" style="text-align:center;margin-top:4px">Versión 40</p>';
   openOv(h);
 }
 function openList(){
