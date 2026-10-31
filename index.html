@@ -393,8 +393,10 @@ function itemById(id){return S.items.find(function(x){return x.id===id})}
 var sk=function(n){return norm(n).replace(/[\s\-_.]+/g,'')};
 function aliasMapFor(items){var m={};items.forEach(function(i){m[sk(i.name)]=sk(i.name)});items.forEach(function(i){(i.alias||[]).forEach(function(a){var k=sk(a);if(k&&!m[k])m[k]=sk(i.name)})});return m}
 function canon(n){if(!AL)AL=aliasMapFor(S.items);var k=sk(n);return AL[k]||k}
-function lm(){if(LM)return LM;LM={};S.history.forEach(function(h){if(h.occ)return;h.lines.forEach(function(l){var k=canon(l.name),cur=LM[k];if(!cur||h.ts>cur.ts)LM[k]={ts:h.ts,p:l.price,u:l.units,b:l.boxed?l.boxes:1,s:h.name}})});return LM}
-function lastFor(it){var r=lm()[canon(it.name)];if(r)return r;if(S.last){if(S.last[it.name])return S.last[it.name];var al=it.alias||[];for(var i=0;i<al.length;i++)if(S.last[al[i]])return S.last[al[i]]}return null}
+function OCC(){return !!(S.session&&S.session.occ)}
+var LMM=false;
+function lm(){var m=!!(S.session&&S.session.occ);if(LM&&LMM===m)return LM;LMM=m;LM={};S.history.forEach(function(h){if(!!h.occ!==m)return;h.lines.forEach(function(l){var k=canon(l.name),cur=LM[k];if(!cur||h.ts>cur.ts)LM[k]={ts:h.ts,p:l.price,u:l.units,b:l.boxed?l.boxes:1,s:h.name}})});return LM}
+function lastFor(it){var r=lm()[canon(it.name)];if(r)return r;if(S.session&&S.session.occ)return null;if(S.last){if(S.last[it.name])return S.last[it.name];var al=it.alias||[];for(var i=0;i<al.length;i++)if(S.last[al[i]])return S.last[al[i]]}return null}
 function curLines(c){c=c||C();if(!c)return [];return S.items.filter(function(i){return c.cart[i.id]}).map(function(i){var x=c.cart[i.id];return {name:i.name,price:x.price,boxed:x.boxed,units:x.units,boxes:x.boxes}})}
 function linesTotal(ls){return ls.reduce(function(a,l){return a+calc(l).total},0)}
 var SD_TAG='Sin detalle';
@@ -515,7 +517,7 @@ function renderResults(){
   arr.sort(function(a,b){return b.r-a.r||norm(a.it.name).localeCompare(norm(b.it.name),'es')});
   if(!arr.length){el.innerHTML='<p class="empty">'+(q?'No hay “'+esc(Q)+'” en tu lista.':'Nada por aquí.')+'</p>';return}
   el.innerHTML=arr.slice(0,80).map(function(x){var it=x.it,c=cart[it.id],l=lastFor(it);
-    var hint=l?'Última vez: '+money(l.p)+' · caja de '+l.u:'Sin registro anterior';
+    var hint=l?'Última vez: '+money(l.p)+(OCC()?' · '+l.u+(l.u===1?' unidad':' unidades'):' · caja de '+l.u):'Sin registro anterior';
     var right=c?'<span class="pill in">'+ic('check')+money(calc(c).total)+'</span>':'<span class="pill add">+ Agregar</span>';
     return '<button class="it" data-a="open" data-id="'+it.id+'"><span class="n">'+esc(it.name.trim())+'<span class="h">'+esc(hint)+'</span></span>'+right+'</button>'}).join('');
 }
@@ -764,7 +766,7 @@ function drawItem(){
   var h='<div class="sh-hd"><h3>'+(SH.isNew?'Producto nuevo':esc(SH.name.trim()))+(S.session.carts.length>1?' <span class="tag">'+esc(C().name)+'</span>':'')+'</h3><button class="ib" data-a="close" aria-label="Cerrar">'+ic('x')+'</button></div>';
   if(SH.sg)h+='<p class="note" style="margin:0 0 6px">De tu lista sugerida: ya vienen las cantidades de la compra anterior. Falta solo el valor.</p>';
   if(SH.isNew)h+='<label class="fl" for="f-name" style="margin-top:0">Nombre del producto</label><input class="inp" id="f-name" value="'+esc(SH.name)+'" autocomplete="off" placeholder="Ej: Pan de molde">';
-  if(l)h+='<div class="last"><span>Última vez: '+money(l.p)+' · caja de '+l.u+(l.b>1?' · '+l.b+' cajas':'')+' <small>('+esc(l.s)+')</small></span><button data-a="uselast">Usar</button></div>';
+  if(l)h+='<div class="last"><span>Última vez: '+money(l.p)+(OCC()?' · '+l.u+(l.u===1?' unidad':' unidades'):' · caja de '+l.u+(l.b>1?' · '+l.b+' cajas':''))+' <small>('+esc(l.s)+')</small></span><button data-a="uselast">Usar</button></div>';
   h+='<label class="fl" for="f-price">Precio de 1 unidad</label><input class="inp big" id="f-price" inputmode="numeric" placeholder="$0" value="'+(SH.price?'$'+grp(num(SH.price)):'')+'" autocomplete="off"><div class="cmp" id="cmp"></div><div id="pal"></div>';
   if(!(S.session&&S.session.occ))h+='<button class="tgl'+(SH.boxed?'':' off')+'" data-a="boxed" aria-pressed="'+SH.boxed+'"><span>Compro por Mayor</span><span class="sw"></span></button>';
   h+='<div class="g2'+(SH.boxed?'':' one')+'"><div><label class="fl" for="f-units">'+(SH.boxed?'Unidades por caja':'Unidades que llevo')+'</label><div class="stp"><button data-a="stp" data-f="units" data-d="-1" aria-label="Menos">'+ic('minus')+'</button><input class="inp big" id="f-units" readonly inputmode="none" value="'+esc(SH.units||'0')+'"><button data-a="stp" data-f="units" data-d="1" aria-label="Más">'+ic('plus')+'</button></div></div>';
@@ -907,7 +909,7 @@ function openSettings(){
   +'<div class="sec">Reiniciar</div><button class="btn d" data-a="clearcart">Vaciar el carro actual</button>'
   +'<button class="btn d hold" id="rst" aria-label="Reiniciar toda la aplicación. Mantén apretado 2 segundos"><span class="fill"></span><span class="lbl">'+ic('trash')+'Reiniciar toda la aplicación · mantén 2 s</span></button>'
   +'<p class="note">Todo se guarda solo en este celular. Haz un respaldo (.xlsx) desde Exportar de vez en cuando.</p>'
-  +'<p class="note" style="text-align:center;margin-top:4px">Versión 37</p>';
+  +'<p class="note" style="text-align:center;margin-top:4px">Versión 38</p>';
   openOv(h);
 }
 function openList(){
@@ -1149,7 +1151,7 @@ var A={
  rm:function(t){removeFromCart(t.dataset.id)},
  boxed:function(){SH.boxed=!SH.boxed;if(SH.boxed&&!SH.boxes)SH.boxes='1';var y=$('.sheet').scrollTop;drawItem();$('.sheet').scrollTop=y},
  stp:function(t,e){if(e.detail===0&&SH)stepField(t.dataset.f,parseInt(t.dataset.d,10))},
- uselast:function(){var l=lastFor(itemById(SH.id));if(!l)return;SH.price=String(l.p);SH.units=String(l.u);SH.boxes=String(l.b||1);SH.boxed=l.u>1||l.b>1;drawItem()},
+ uselast:function(){var l=lastFor(itemById(SH.id));if(!l)return;SH.price=String(l.p);SH.units=String(l.u);SH.boxes=String(l.b||1);SH.boxed=OCC()?false:(l.u>1||l.b>1);if(OCC()){SH.units=String((+l.u||0)*(+l.b||1));SH.boxes='1'}drawItem()},
  itemok:itemOk,
  settheme:function(t){S.theme=t.dataset.t;save();applyTheme();openSettings()},
  autofs:function(){S.autoFs=!S.autoFs;save();openSettings()},
