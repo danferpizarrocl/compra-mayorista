@@ -39,3 +39,4 @@ self.addEventListener('fetch', function (e) {
     return hit || net;
   }));
 });
+// versión 42
