@@ -600,7 +600,7 @@ function yearsHTML(){
      +'<div style="height:6px;border-radius:4px;background:var(--surface2);margin-top:7px"><i style="display:block;height:100%;border-radius:4px;width:'+Math.max(2,Math.round(a.t/max*100))+'%;background:var(--accent)"></i></div></div>'}).join('')}
 function renderHist(){
   var tags=['todas'];S.names.forEach(function(n){tags.push(n)});S.history.forEach(function(h){if(!h.occ&&tags.indexOf(h.tag)<0)tags.push(h.tag)});if(S.history.some(function(h){return h.occ})||HF==='ocasionales')tags.push('ocasionales');
-  var chips='<div class="chips" style="margin-top:0">'+tags.map(function(t){return '<button class="chip" data-a="hf" data-t="'+esc(t)+'" aria-pressed="'+(HF===t)+'">'+(t==='todas'?'Todas':t==='ocasionales'?'Ocasionales':esc(t))+'</button>'}).join('')+'</div>';
+  var chips='<div style="margin-bottom:12px"><label class="fl" for="hf-sel" style="margin-top:0">Ver</label><select class="inp" id="hf-sel">'+tags.map(function(t){return '<option value="'+esc(t)+'"'+(HF===t?' selected':'')+'>'+(t==='todas'?'Todas':t==='ocasionales'?'Ocasionales':esc(t))+'</option>'}).join('')+'</select></div>';
   var cur='';
   if(S.session)cur='<section class="card"><h2>'+ic('cart')+ttl('encurso','En curso')+'</h2>'+S.session.carts.map(function(c){var t=totalsOf(c);return '<div class="hist"><div class="hd"><span><b>'+esc(c.name)+'<span class="tag">en curso</span></b><em>'+t.count+' productos</em></span><span class="am">'+money(t.total)+'</span></div></div>'}).join('')+'</section>';
   var list=histList();
@@ -909,7 +909,7 @@ function openSettings(){
   +'<div class="sec">Reiniciar</div><button class="btn d" data-a="clearcart">Vaciar el carro actual</button>'
   +'<button class="btn d hold" id="rst" aria-label="Reiniciar toda la aplicación. Mantén apretado 2 segundos"><span class="fill"></span><span class="lbl">'+ic('trash')+'Reiniciar toda la aplicación · mantén 2 s</span></button>'
   +'<p class="note">Todo se guarda solo en este celular. Haz un respaldo (.xlsx) desde Exportar de vez en cuando.</p>'
-  +'<p class="note" style="text-align:center;margin-top:4px">Versión 38</p>';
+  +'<p class="note" style="text-align:center;margin-top:4px">Versión 39</p>';
   openOv(h);
 }
 function openList(){
@@ -1285,6 +1285,7 @@ document.addEventListener('input',function(e){var t=e.target,id=t.id;
 });
 function updateTotalsOnly(skip){updateTotals()}
 document.addEventListener('change',async function(e){var t=e.target;
+  if(t.id==='hf-sel'){HF=t.value;CHSEL=-1;renderHist();return}
   if(t.id==='paid-s'||t.id==='paid-h'){var y0=window.scrollY;render();window.scrollTo(0,y0);return}
   if(t.classList&&t.classList.contains('sugck')){sugCount();return}
   if(t.dataset.a==='exsel'){var cur=exSel().slice(),k=cur.indexOf(t.value);if(t.checked&&k<0)cur.push(t.value);else if(!t.checked&&k>=0)cur.splice(k,1);EX.sel=cur;var y=window.scrollY;renderExport();window.scrollTo(0,y)}
