@@ -290,9 +290,15 @@ td.red{color:var(--bad)}
 .choice button{background:var(--surface2);border:1.5px solid var(--line);border-radius:16px;padding:18px 8px;font-family:var(--f-display);font-weight:800;font-size:28px}
 .choice button small{display:block;font-family:var(--f-body);font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
 .choice button:active{border-color:var(--accent);background:var(--accent-soft)}
+#splash{position:fixed;inset:0;z-index:999;background:#0e8a90;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .35s ease}
+#splash.gone{opacity:0;pointer-events:none}
+#splash img{width:96px;height:96px;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
+#splash h1{margin:6px 0 0;font:800 28px/1 var(--f-display);letter-spacing:-.02em}
+#splash p{margin:0;font-size:14px;opacity:.85}
 </style>
 </head>
 <body>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 43</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -357,6 +363,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
+var APP_VERSION='43';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],HF='todas',HT='mod',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -941,7 +948,7 @@ function openSettings(){
   +'<div class="sec">Reiniciar</div><button class="btn d" data-a="clearcart">Vaciar el carro actual</button>'
   +'<button class="btn d hold" id="rst" aria-label="Reiniciar toda la aplicación. Mantén apretado 2 segundos"><span class="fill"></span><span class="lbl">'+ic('trash')+'Reiniciar toda la aplicación · mantén 2 s</span></button>'
   +'<p class="note">Todo se guarda solo en este celular. Haz un respaldo (.xlsx) desde Exportar de vez en cuando.</p>'
-  +'<p class="note" style="text-align:center;margin-top:4px">Versión 42</p>';
+  +'<p class="note" style="text-align:center;margin-top:4px">Versión '+APP_VERSION+'</p>';
   openOv(h);
 }
 function openList(){
@@ -1380,6 +1387,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(e.key!=='Enter
   e.preventDefault();t.blur()});
 
 /* ---------- inicio ---------- */
+document.getElementById('splash-v').textContent='Versión '+APP_VERSION;setTimeout(function(){var sp=document.getElementById('splash');if(sp){sp.classList.add('gone');setTimeout(function(){sp.remove()},400)}},1300);
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0)window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
 try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
 applyTheme();updFsIcon();render();
