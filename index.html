@@ -290,6 +290,9 @@ td.red{color:var(--bad)}
 .choice button{background:var(--surface2);border:1.5px solid var(--line);border-radius:16px;padding:18px 8px;font-family:var(--f-display);font-weight:800;font-size:28px}
 .choice button small{display:block;font-family:var(--f-body);font-weight:500;font-size:11.5px;color:var(--muted);margin-top:2px}
 .choice button:active{border-color:var(--accent);background:var(--accent-soft)}
+#cbar{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:24;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border:0;border-radius:14px;background:var(--accent);color:#fff;font:700 15px var(--f-body);box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;text-align:left}
+#cbar[hidden]{display:none}
+#cbar b{font:800 17px var(--f-display);white-space:nowrap}
 #splash{position:fixed;inset:0;z-index:999;background:#0e8a90;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .35s ease}
 #splash.gone{opacity:0;pointer-events:none}
 #splash img{width:96px;height:96px;border-radius:22px;box-shadow:0 6px 20px rgba(0,0,0,.2)}
@@ -298,7 +301,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.3</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.4</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -316,6 +319,7 @@ td.red{color:var(--bad)}
   <main id="main"></main>
 </div>
 <nav class="nav" id="nav"><div class="in"></div></nav>
+<button id="cbar" data-a="calc" hidden></button>
 <div id="ovroot"></div>
 <div class="toast" id="toast"></div>
 
@@ -363,7 +367,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.3';
+var APP_VERSION='4.4';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],HF='todas',HT='mod',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -692,7 +696,7 @@ function renderExport(){
 
 
 /* ---------- render general ---------- */
-function render(){setSch(false);renderNav();({comprar:renderComprar,carro:renderCarro,historial:renderHist,exportar:renderExport})[view]()}
+function render(){setSch(false);renderNav();({comprar:renderComprar,carro:renderCarro,historial:renderHist,exportar:renderExport})[view]();calcBar()}
 function overOf(c){return !!(c&&c.budget>0&&totalsOf(c).total>c.budget)}
 function checkOver(){var c=C();if(!c)return;var o=overOf(c);
   if(!o){c.overShown=false;return}
@@ -707,9 +711,10 @@ function refresh(){updateTotals();renderNav();checkOver();
   if(view==='comprar'){renderResults();renderRecent();var cb=$('.cartsw')||$('.sugc');if(cb)renderComprar()}else render()}
 
 /* ---------- hojas (modales) ---------- */
+function calcBar(){var b=$('#cbar');if(!b)return;var open=!!$('#ovroot').innerHTML;if(open||CM!=='calc'||(!CALC.e&&!CALC.done)){b.hidden=true;return}var r=calcEval(CALC.e);var v=CALC.done?calcFmt(r):(calcExpr(CALC.e)+(r==null?'':' = '+calcFmt(r)));b.innerHTML='<span>Calculadora</span><b>'+esc(v)+'</b>';b.hidden=false}
 function openOv(inner,mid){closeOv();var d=document.createElement('div');d.className='ov'+(mid?' mid':'');d.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+inner+'</div>';
-  d.addEventListener('click',function(e){if(e.target===d)closeOv()});$('#ovroot').appendChild(d);document.body.style.overflow='hidden'}
-function closeOv(){$('#ovroot').innerHTML='';document.body.style.overflow=''}
+  d.addEventListener('click',function(e){if(e.target===d)closeOv()});$('#ovroot').appendChild(d);document.body.style.overflow='hidden';calcBar()}
+function closeOv(){$('#ovroot').innerHTML='';document.body.style.overflow='';calcBar()}
 function toast(msg,fn,label){var t=$('#toast');t.innerHTML='<div><span>'+esc(msg)+'</span>'+(fn?'<button id="tact">'+esc(label||'Deshacer')+'</button>':'')+'</div>';
   clearTimeout(toast.t);toast.t=setTimeout(function(){t.innerHTML=''},fn?6000:2400);
   if(fn)$('#tact').onclick=function(){fn();t.innerHTML=''}}
@@ -729,9 +734,9 @@ function calcFmt(n){if(n==='err')return 'No se puede dividir por 0';if(n==null)r
 function calcExpr(e){return e.replace(/\d+\.?\d*|\.\d+/g,function(m){var pr=m.split('.');return pr[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(pr.length>1?','+pr[1]:'')}).replace(/\*/g,'×').replace(/\//g,'÷').replace(/(.)-/g,function(m,c){return c+'−'})}
 function calcHistHtml(){var h=S.calcHist||[];return '<div class="hh"><b>Historial</b>'+(h.length?'<button data-a="chclr">Borrar historial</button>':'')+'</div>'+(h.length?'<div class="hl">'+h.map(function(x,i){return '<button data-a="chuse" data-i="'+i+'"><span class="x">'+esc(x.x)+' =</span><span class="r">'+calcFmt(x.n)+'</span></button>'}).join('')+'</div>':'<p class="note" style="margin:6px 0 0">Aún no hay cuentas. Se guardan al apretar “=”.</p>')}
 function calcShow(){var e=CALC.e,ex=calcExpr(e);
-  var r=calcEval(e);$('#cex').textContent=CALC.done?'':ex;$('#crs').textContent=CALC.done?calcFmt(r):(r==null?(ex||'0'):calcFmt(r))}
+  var r=calcEval(e);$('#cex').textContent=CALC.done?'':ex;$('#crs').textContent=CALC.done?calcFmt(r):(r==null?(ex||'0'):calcFmt(r));calcBar()}
 function calcTabs(){return '<div class="seg" role="group" style="margin:10px 0 2px"><button data-a="cmode" data-m="calc" aria-pressed="'+(CM==='calc')+'">Calculadora</button><button data-a="cmode" data-m="kg" aria-pressed="'+(CM==='kg')+'">Precio por kilo / litro</button></div>'}
-function openCalc(){if(CM==='kg'){drawKg();return}CALC={e:'',done:false};
+function openCalc(){if(CM==='kg'){drawKg();return}if(!CALC.e&&!CALC.done)CALC={e:'',done:false};
   var k=function(v,l,c,al){return '<button class="'+(c||'')+'" data-a="ck" data-k="'+v+'" aria-label="'+(al||l||v)+'">'+(l||v)+'</button>'};
   openOv(shd('Calculadora')+calcTabs()+'<div class="cdisp"><div class="ex" id="cex"></div><div class="rs" id="crs">0</div></div><div class="ckeys">'
    +k('C','C','kcl')+k('B',ic('bks'),'kye','Borrar último dígito')+k('/','÷','kop')+k('*','×','kop')
