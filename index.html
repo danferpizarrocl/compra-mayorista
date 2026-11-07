@@ -301,7 +301,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.6</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.7</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -367,8 +367,8 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.6';
-var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,HF='todas',HT='mod',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
+var APP_VERSION='4.7';
+var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
   var items=DEFAULT_ITEMS.map(function(n){return {id:uid(),name:n}});
@@ -563,12 +563,13 @@ function renderCarro(){
 /* ---------- vista: Historial ---------- */
 function tagColor(tag){if(tag==='Ocasional')return 'var(--s4)';var i=S.names.indexOf(tag);return i===0?'var(--s1)':i===1?'var(--s2)':'var(--s3)'}
 function histList(){return S.history.filter(function(h){
+  if(HY!=='todos'&&new Date(h.ts).getFullYear()!==+HY)return false;
   if(HT==='sup')return (h.store||'')===(HS==null?'':HS);
   if(HF==='junto')return true;
   return HF==='ocasionales'?!!h.occ:(!h.occ&&(HF==='todas'||h.tag===HF))})}
 function hfLab(){if(HT==='sup')return HS?HS:'Sin supermercado';return HF==='todas'?'':HF==='junto'?'todo junto':HF==='ocasionales'?'ocasionales':HF}
 function storeSel(h){var ls=storeList(!!h.occ).slice();if(h.store&&ls.indexOf(h.store)<0)ls.push(h.store);return '<div class="row"><span>Supermercado</span><select class="inp" id="store-h" data-id="'+h.id+'"><option value="">Sin supermercado</option>'+ls.map(function(x){return '<option value="'+esc(x)+'"'+(h.store===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></div>'}
-function storeStats(){var m={},a=[];S.history.forEach(function(h){var k=h.store||'',x=m[k];if(!x){x=m[k]={s:k,n:0,t:0};a.push(x)}x.n++;x.t+=hTotal(h)});a.sort(function(p,q){return q.t-p.t});return a}
+function storeStats(){var m={},a=[];S.history.forEach(function(h){if(HY!=='todos'&&new Date(h.ts).getFullYear()!==+HY)return;var k=h.store||'',x=m[k];if(!x){x=m[k]={s:k,n:0,t:0};a.push(x)}x.n++;x.t+=hTotal(h)});a.sort(function(p,q){return q.t-p.t});return a}
 function niceStep(max){var p=Math.pow(10,Math.floor(Math.log10(max||1))),c=[1,2,2.5,5,10];for(var i=0;i<c.length;i++){if(max/(c[i]*p)<=4)return c[i]*p}return 10*p}
 function kfmt(v){return v===0?'$0':v>=1e6?'$'+(v/1e6).toString().replace('.',',')+' M':'$'+(v/1000)+' mil'}
 function barPath(x,y,w,h,r){r=Math.max(0,Math.min(r,h,w/2));return 'M'+x+','+(y+h)+'V'+(y+r)+'Q'+x+','+y+' '+(x+r)+','+y+'H'+(x+w-r)+'Q'+(x+w)+','+y+' '+(x+w)+','+(y+r)+'V'+(y+h)+'Z'}
@@ -623,6 +624,8 @@ function renderHist(){
   var ss=storeStats();
   if(HT==='sup'&&(HS==null||!ss.some(function(x){return x.s===HS})))HS=ss.length?ss[0].s:'';
   var tabs='<div class="seg" role="group" style="margin-bottom:12px"><button data-a="httab" data-t="mod" aria-pressed="'+(HT==='mod')+'">Por modalidad</button><button data-a="httab" data-t="sup" aria-pressed="'+(HT==='sup')+'">Por supermercado</button></div>';
+  var yrs=[];S.history.forEach(function(h){var y=new Date(h.ts).getFullYear();if(yrs.indexOf(y)<0)yrs.push(y)});yrs.sort(function(a,b){return b-a});
+  tabs+='<div style="margin-bottom:12px"><label class="fl" for="hy-sel" style="margin-top:0">Año</label><select class="inp" id="hy-sel"><option value="todos"'+(HY==='todos'?' selected':'')+'>Todos los años</option>'+yrs.map(function(y){return '<option value="'+y+'"'+(String(HY)===String(y)?' selected':'')+'>'+y+'</option>'}).join('')+'</select></div>';
   var chips='';
   if(HT==='mod'){
     var tags=['junto','todas'];S.names.forEach(function(n){tags.push(n)});S.history.forEach(function(h){if(!h.occ&&tags.indexOf(h.tag)<0)tags.push(h.tag)});if(S.history.some(function(h){return h.occ})||HF==='ocasionales')tags.push('ocasionales');
@@ -636,15 +639,16 @@ function renderHist(){
   var rows=list.map(function(h){var open=hOpen===h.id,tot=hTotal(h),gd=gondTotal(h);
     var pbox=open?'<div class="paidbox">'+(h.sd?'':'<div class="row"><span>Precio de lista</span><b>'+money(gd)+'</b></div>')+'<div class="row"><span>Pagado en caja</span><input class="inp" id="paid-h" data-id="'+h.id+'" inputmode="numeric" placeholder="$ según la boleta" value="'+(h.paid>0?'$'+grp(h.paid):'')+'"></div>'+(h.sd?'':'<div class="row"><span>Descuento</span><b id="paid-d">'+discTxt(gd,h.paid)+'</b></div><small>Si lo dejas vacío, se usa el precio de lista.</small>')+'</div>':'';
     var sbox=open?'<div class="paidbox">'+storeSel(h)+'</div>':'';
-    var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox+sbox+'<div class="acts">'+(h.sd?'':(h.occ?'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button>':'<button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button>')+'<button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
+    var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox+sbox+'<div class="acts">'+(h.sd?'<button class="btn s hb" data-a="hcomplete" data-id="'+h.id+'">Agregar productos</button>':(h.occ?'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button>':'<button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button>')+'<button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
     var diff=!h.sd&&h.xlTotal>0&&h.xlTotal!==gd?'<div class="warn">En tu Excel este total es '+money(h.xlTotal)+'</div>':'';
     return '<div class="hist"><button class="hd" data-a="hopen" data-id="'+h.id+'" aria-expanded="'+open+'"><span><b>'+esc(h.name)+'<span class="tag" style="background:transparent;border:1px solid '+tagColor(h.tag)+';color:var(--ink)">'+esc(h.tag)+'</span></b><em>'+(h.approx?fmonth(h.ts):fdate(h.ts))+' · '+(h.sd?'<span class="sdl">sin detalle</span>':h.lines.length+' productos')+(h.store?' · '+esc(h.store):'')+'</em>'+diff+'</span><span class="am" style="text-align:right">'+money(tot)+(!h.sd&&h.paid>0&&h.paid!==gd?'<br><small style="font-weight:500;color:var(--muted);font-size:11.5px">precio de lista '+money(gd)+'</small>':'')+'</span></button>'+body+'</div>'}).join('');
   var hsum=list.reduce(function(a,h){return a+hTotal(h)},0),hgon=list.reduce(function(a,h){return a+gondTotal(h)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
   var ymin=yrs.length?Math.min.apply(null,yrs):0,ymax=yrs.length?Math.max.apply(null,yrs):0;
   var hsub=list.length+' compra'+(list.length===1?'':'s')+(yrs.length?' · '+(ymin===ymax?ymin:ymin+'–'+ymax):'')+(hfLab()?' · '+esc(hfLab()):'')+(HT==='sup'||HF==='junto'?' · '+list.reduce(function(a,h){return a+(h.sd?0:h.lines.length)},0)+' productos':'');
-  var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total')+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span>'+(hgon!==hsum?'<div class="allc"><div class="row"><span>Precio de lista</span><b>'+money(hgon)+'</b></div><div class="row"><span>Pagado en caja</span><b>'+money(hsum)+'</b></div><div class="row"><span>Descuentos</span><b style="color:var(--lvg)">'+(hgon>hsum?'−':'+')+money(Math.abs(hgon-hsum))+'</b></div><small>Los descuentos de caja son la diferencia entre ambos.</small></div>':'')+'</div>';
-  var grp=function(f){var a=S.history.filter(f);return {n:a.length,t:a.reduce(function(x,h){return x+hTotal(h)},0)}};
-  var gA=grp(function(){return true}),gMD=grp(function(h){return !h.occ&&!h.sd}),gMS=grp(function(h){return !h.occ&&h.sd}),gOD=grp(function(h){return h.occ&&!h.sd}),gOS=grp(function(h){return h.occ&&h.sd});
+  var tTxt=HT==='sup'?'Total · '+(HS?HS:'Sin supermercado'):HF==='junto'?'Total':HF==='todas'?'Total mayorista':HF==='ocasionales'?'Total ocasional':'Total mayorista · '+HF;
+  var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot',tTxt)+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span>'+(hgon!==hsum?'<div class="allc"><div class="row"><span>Precio de lista</span><b>'+money(hgon)+'</b></div><div class="row"><span>Pagado en caja</span><b>'+money(hsum)+'</b></div><div class="row"><span>Descuentos</span><b style="color:var(--lvg)">'+(hgon>hsum?'−':'+')+money(Math.abs(hgon-hsum))+'</b></div><small>Los descuentos de caja son la diferencia entre ambos.</small></div>':'')+'</div>';
+  var gsumf=function(f){var a=S.history.filter(f);return {n:a.length,t:a.reduce(function(x,h){return x+hTotal(h)},0)}};
+  var gA=gsumf(function(){return true}),gMD=gsumf(function(h){return !h.occ&&!h.sd}),gMS=gsumf(function(h){return !h.occ&&h.sd}),gOD=gsumf(function(h){return h.occ&&!h.sd}),gOS=gsumf(function(h){return h.occ&&h.sd});
   var rowG=function(l,g){return '<div class="row"><span>'+l+' <small>('+g.n+(g.n===1?' compra':' compras')+')</small></span><b>'+money(g.t)+'</b></div>'};
   var sdcard=gA.n?'<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total general')+'</span><div class="bigv">'+money(gA.t)+'</div><span class="ctx" style="margin:6px 0 0">'+gA.n+(gA.n===1?' compra':' compras')+' guardadas, contando todo</span><div class="allc">'+rowG('Mayorista con detalle',gMD)+rowG('Mayorista sin detalle',gMS)+rowG('Ocasional con detalle',gOD)+rowG('Ocasional sin detalle',gOS)+'</div></div>':'';
   var supsum='';
@@ -879,12 +883,12 @@ function openFinish(){
    +(S.session.store?'<p class="note" style="margin:10px 0 0">Supermercado: <b>'+esc(S.session.store)+'</b></p>':'<label class="fl" for="fin-store">Supermercado</label><select class="inp" id="fin-store"><option value="">Elige dónde compraste…</option>'+storeList(!!S.session.occ).map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join('')+'</select>')
    +'<div class="err" id="ferr" hidden></div>'
    +'<div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn" data-a="finok">Finalizar</button></div>',true)}
-function finDefName(c){var o=S.session&&S.session.occ&&S.session.editId&&S.history.find(function(x){return x.id===S.session.editId});return o?o.name:cartSheetName(c)}
+function finDefName(c){var o=S.session&&S.session.editId&&S.history.find(function(x){return x.id===S.session.editId});return o?o.name:cartSheetName(c)}
 function finishOk(){
   var c=C();if(!c)return;var ls=curLines(c);if(!ls.length)return;
   var st=S.session.store||($('#fin-store')?$('#fin-store').value:'');if(!st){var fe=$('#ferr');if(fe){fe.hidden=false;fe.textContent='Elige el supermercado.'}return}
   var h={store:st,id:uid(),name:($('#fin-name').value||'').trim()||cartSheetName(c),tag:c.name,ts:Date.now(),approx:false,lines:ls,budget:c.budget,src:'app'};
-  var ed=-1;if(S.session.occ){h.occ=true;h.tag='Ocasional';if(S.session.editId)ed=S.history.findIndex(function(x){return x.id===S.session.editId});if(ed>=0){h.ts=S.history[ed].ts;h.approx=S.history[ed].approx;if(S.history[ed].paid>0)h.paid=S.history[ed].paid}}
+  var ed=-1;if(S.session.occ){h.occ=true;h.tag='Ocasional'}if(S.session.editId)ed=S.history.findIndex(function(x){return x.id===S.session.editId});if(ed>=0){var old=S.history[ed];h.ts=old.ts;h.approx=old.approx;if(old.paid>0)h.paid=old.paid}
   var prev=null;S.history.forEach(function(x){if(x.tag===h.tag&&!!x.occ===!!h.occ&&x.id!==S.session.editId&&(!prev||x.ts>prev.ts))prev=x});if(ed>=0)S.history.splice(ed,1,h);else S.history.unshift(h);LM=AL=null;S.session.carts.splice(S.session.active,1);S.demo=false;
   if(!S.session.carts.length){S.session=null;S.calcHist=[]}else S.session.active=0;
   save();closeOv();render();window.scrollTo(0,0);
@@ -1294,6 +1298,8 @@ var A={
  payapply:function(){if(!PAYX&&!XLO.length)return;var pr=PAYX?applyPay(PAYX):{set:0,added:0,upd:0,missing:[]};PAYX=null;var noc=importOcc(S.items);save();closeOv();render();toast([payToast(pr),noc?noc+(noc===1?' compra ocasional':' compras ocasionales'):''].filter(Boolean).join(' · ')||'No había nada que aplicar')},
  hbase:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(C()?'Reemplaza el carro actual por esta compra.':'Inicia una compra con esta lista de productos.')+'</p><button class="btn" data-a="hbaseok" data-id="'+t.dataset.id+'">Sí, usar como base</button>';b.appendChild(d)}},
  hedit:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(S.session?'Reemplaza la compra en curso por esta para editarla. Al finalizar, reemplaza la original.':'Se abre como carro ocasional. Al finalizar, reemplaza la original.')+'</p><button class="btn" data-a="heditok" data-id="'+t.dataset.id+'">Sí, editar</button>';b.appendChild(d)}},
+ hcomplete:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;
+   S.session={carts:[newCart(S.names[0]||'Casa',{},S.budget)],active:0,multi:false,occ:!!h.occ,editId:h.id,store:h.store||''};S.demo=false;save();view='carro';render();window.scrollTo(0,0);toast('Agregando productos a «'+h.name+'»')},
  heditok:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;
    S.session={carts:[newCart(S.names[0]||'Casa',{},S.budget)],active:0,multi:false,occ:true,editId:h.id,store:h.store||''};var c=C();c.cart={};
    h.lines.forEach(function(l,i){var it=S.items.find(function(x){return canon(x.name)===canon(l.name)});if(!it){it={id:uid(),name:l.name};S.items.push(it)}c.cart[it.id]={price:l.price,boxed:false,units:(+l.units||0)*(l.boxed?(+l.boxes||1):1),boxes:1,ts:Date.now()+i}});
@@ -1356,6 +1362,7 @@ document.addEventListener('input',function(e){var t=e.target,id=t.id;
 function updateTotalsOnly(skip){updateTotals()}
 document.addEventListener('change',async function(e){var t=e.target;
   if(t.id==='hf-sel'){HF=t.value;CHSEL=-1;renderHist();return}
+  if(t.id==='hy-sel'){HY=t.value;CHSEL=-1;renderHist();return}
   if(t.id==='hs-sel'){HS=t.value;CHSEL=-1;renderHist();return}
   if(t.id==='store-h'){var sh2=S.history.find(function(x){return x.id===t.dataset.id});if(sh2){if(t.value)sh2.store=t.value;else delete sh2.store;save();var y1=window.scrollY;renderHist();window.scrollTo(0,y1);toast('Supermercado actualizado')}return}
   if(t.id==='paid-s'||t.id==='paid-h'){var y0=window.scrollY;render();window.scrollTo(0,y0);return}
