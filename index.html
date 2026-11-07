@@ -215,7 +215,7 @@ h1,h2,h3{font-family:var(--f-display);margin:0;letter-spacing:-.01em}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .acts .btn.hb{flex:1 1 100%}
 .exkind{margin:0 0 10px}.exall{margin:0 0 8px}
-.acts .btn[data-a=hbaseok],.cf .btn[data-a=hbaseok],.acts .btn[data-a=heditok],.cf .btn[data-a=heditok]{display:block;width:100%;flex:1 1 100%;box-sizing:border-box}
+.acts .btn[data-a=hbaseok],.cf .btn[data-a=hbaseok],.acts .btn[data-a=heditok],.cf .btn[data-a=heditok],.acts .btn[data-a=hcompleteok],.cf .btn[data-a=hcompleteok]{display:block;width:100%;flex:1 1 100%;box-sizing:border-box}
 .acts .btn{margin-top:0;width:auto;flex:1;min-width:120px;padding:10px;min-height:42px;font-size:13.5px}
 .tw{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
 table{border-collapse:collapse;width:100%;font-size:13px;min-width:420px}
@@ -303,7 +303,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.9</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.10</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -369,7 +369,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.9';
+var APP_VERSION='4.10';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -887,6 +887,7 @@ function openFinish(){
    +'<div class="err" id="ferr" hidden></div>'
    +'<div class="g2"><button class="btn s" data-a="close">Cancelar</button><button class="btn" data-a="finok">Finalizar</button></div>',true)}
 function finDefName(c){var o=S.session&&S.session.editId&&S.history.find(function(x){return x.id===S.session.editId});return o?o.name:cartSheetName(c)}
+function hcompleteGo(h){S.session={carts:[newCart(S.names[0]||'Casa',{},S.budget)],active:0,multi:false,occ:!!h.occ,editId:h.id,store:h.store||''};S.demo=false;save();view='carro';render();window.scrollTo(0,0);toast('Agregando productos a «'+h.name+'»')}
 function finishOk(){
   var c=C();if(!c)return;var ls=curLines(c);if(!ls.length)return;
   var st=S.session.store||($('#fin-store')?$('#fin-store').value:'');if(!st){var fe=$('#ferr');if(fe){fe.hidden=false;fe.textContent='Elige el supermercado.'}return}
@@ -1302,8 +1303,10 @@ var A={
  payapply:function(){if(!PAYX&&!XLO.length)return;var pr=PAYX?applyPay(PAYX):{set:0,added:0,upd:0,missing:[]};PAYX=null;var noc=importOcc(S.items);save();closeOv();render();toast([payToast(pr),noc?noc+(noc===1?' compra ocasional':' compras ocasionales'):''].filter(Boolean).join(' · ')||'No había nada que aplicar')},
  hbase:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(C()?'Reemplaza el carro actual por esta compra.':'Inicia una compra con esta lista de productos.')+'</p><button class="btn" data-a="hbaseok" data-id="'+t.dataset.id+'">Sí, usar como base</button>';b.appendChild(d)}},
  hedit:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(S.session?'Reemplaza la compra en curso por esta para editarla. Al finalizar, reemplaza la original.':'Se abre para editarla. Al finalizar, reemplaza la original.')+'</p><button class="btn" data-a="heditok" data-id="'+t.dataset.id+'">Sí, editar</button>';b.appendChild(d)}},
- hcomplete:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;
-   S.session={carts:[newCart(S.names[0]||'Casa',{},S.budget)],active:0,multi:false,occ:!!h.occ,editId:h.id,store:h.store||''};S.demo=false;save();view='carro';render();window.scrollTo(0,0);toast('Agregando productos a «'+h.name+'»')},
+ hcomplete:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;var b=t.parentNode;
+   if(S.session&&S.session.editId!==h.id){if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">Ya tienes una compra en curso. Si continúas, se reemplaza por esta para agregarle productos.</p><button class="btn" data-a="hcompleteok" data-id="'+h.id+'">Sí, agregar productos</button>';b.appendChild(d)}return}
+   hcompleteGo(h)},
+ hcompleteok:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(h)hcompleteGo(h)},
  heditok:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;
    S.session={carts:[newCart(h.occ?(S.names[0]||'Casa'):h.tag,{},S.budget)],active:0,multi:false,occ:!!h.occ,editId:h.id,store:h.store||''};var c=C();c.cart={};
    h.lines.forEach(function(l,i){var it=S.items.find(function(x){return canon(x.name)===canon(l.name)});if(!it){it={id:uid(),name:l.name};S.items.push(it)}c.cart[it.id]={price:l.price,boxed:false,units:(+l.units||0)*(l.boxed?(+l.boxes||1):1),boxes:1,ts:Date.now()+i}});
