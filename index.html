@@ -303,7 +303,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.12</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.13</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -369,7 +369,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.12';
+var APP_VERSION='4.13';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,CDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -659,7 +659,7 @@ function renderHist(){
   var supsum='';
   if(HT==='sup'){var mx=ss.reduce(function(a,x){return Math.max(a,x.t)},0)||1;
     supsum=ss.length?'<section class="card"><h2>'+ic('cart')+ttl('porsuper','Gasto por supermercado')+'</h2>'+ss.map(function(x){return '<button class="hd" data-a="stsel" data-s="'+esc(x.s)+'" style="width:100%;text-align:left;padding:9px 2px;border-bottom:1px solid var(--line);background:none;border-left:0;border-right:0;border-top:0"><span style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span><b>'+(x.s?esc(x.s):'Sin supermercado')+'</b>'+(x.s===HS?'<span class="tag">viendo</span>':'')+'<br><span class="rksub">'+x.n+(x.n===1?' compra':' compras')+'</span></span><b style="font:800 18px var(--f-display)">'+money(x.t)+'</b></span><i style="display:block;height:6px;border-radius:4px;background:var(--accent);margin-top:7px;width:'+Math.max(2,Math.round(x.t/mx*100))+'%"></i></button>'}).join('')+'</section>':'<p class="note" style="margin:0 0 12px">Aún no hay compras guardadas.</p>'}
-  $('#main').innerHTML='<div style="height:0"></div>'+tabs+totc+sdcard+chips+supsum+cur+(HT==='mod'&&HF==='ocasionales'&&!list.length?'<p class="note" style="margin:0 0 12px">Aquí van tus compras ocasionales, aparte de todo lo mayorista: sus propios totales, gráficos y ranking.</p>':'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+(hfLab()?' · '+esc(hfLab()):'')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
+  $('#main').innerHTML='<div style="height:0"></div>'+tabs+chips+totc+sdcard+supsum+cur+(HT==='mod'&&HF==='ocasionales'&&!list.length?'<p class="note" style="margin:0 0 12px">Aquí van tus compras ocasionales, aparte de todo lo mayorista: sus propios totales, gráficos y ranking.</p>':'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+(hfLab()?' · '+esc(hfLab()):'')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
    +'<section class="card"><h2>'+ic('cal')+ttl('anual','Total por año')+(hfLab()?' · '+esc(hfLab()):'')+'</h2>'+yearsHTML()+'</section>'
    +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(hfLab()?' · '+esc(hfLab()):'')+'</h2><div id="rkbox">'+rankBox()+'</div></section>')
    +'<section class="card"><h2>'+ic('list')+ttl('guardadas','Compras guardadas')+' · '+list.length+'</h2>'+(rows||'<p class="empty">Aún no hay compras guardadas.</p>')+'</section>';
