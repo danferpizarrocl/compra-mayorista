@@ -292,6 +292,8 @@ td.red{color:var(--bad)}
 .choice button:active{border-color:var(--accent);background:var(--accent-soft)}
 #cbar{position:fixed;left:12px;right:12px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:24;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border:0;border-radius:14px;background:var(--accent);color:#fff;font:700 15px var(--f-body);box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer;text-align:left}
 #cbar[hidden]{display:none}
+#cbar .cmain{flex:1;display:flex;justify-content:space-between;align-items:center;gap:10px;background:none;border:0;color:#fff;font:inherit;padding:0;cursor:pointer;text-align:left;min-width:0}
+#cbar .cx{flex:0 0 auto;width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:#fff;font:700 18px/1 var(--f-body);cursor:pointer}
 #cbar b{font:800 17px var(--f-display);white-space:nowrap}
 #splash{position:fixed;inset:0;z-index:999;background:#0e8a90;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;transition:opacity .35s ease}
 #splash.gone{opacity:0;pointer-events:none}
@@ -301,7 +303,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.7</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.8</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -319,7 +321,7 @@ td.red{color:var(--bad)}
   <main id="main"></main>
 </div>
 <nav class="nav" id="nav"><div class="in"></div></nav>
-<button id="cbar" data-a="calc" hidden></button>
+<div id="cbar" hidden></div>
 <div id="ovroot"></div>
 <div class="toast" id="toast"></div>
 
@@ -367,7 +369,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.7';
+var APP_VERSION='4.8';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -719,7 +721,7 @@ function refresh(){updateTotals();renderNav();checkOver();
   if(view==='comprar'){renderResults();renderRecent();var cb=$('.cartsw')||$('.sugc');if(cb)renderComprar()}else render()}
 
 /* ---------- hojas (modales) ---------- */
-function calcBar(){var b=$('#cbar');if(!b)return;var open=!!$('#ovroot').innerHTML;if(open||CM!=='calc'||(!CALC.e&&!CALC.done)){b.hidden=true;return}var r=calcEval(CALC.e);var v=CALC.done?calcFmt(r):(calcExpr(CALC.e)+(r==null?'':' = '+calcFmt(r)));b.innerHTML='<span>Calculadora</span><b>'+esc(v)+'</b>';b.hidden=false}
+function calcBar(){var b=$('#cbar');if(!b)return;var open=!!$('#ovroot').innerHTML;if(open||CM!=='calc'||(!CALC.e&&!CALC.done)){b.hidden=true;return}var r=calcEval(CALC.e);var v=CALC.done?calcFmt(r):(calcExpr(CALC.e)+(r==null?'':' = '+calcFmt(r)));b.innerHTML='<button class="cmain" data-a="calc"><span>Calculadora</span><b>'+esc(v)+'</b></button><button class="cx" data-a="calcx" aria-label="Quitar calculadora">×</button>';b.hidden=false}
 function openOv(inner,mid){closeOv();var d=document.createElement('div');d.className='ov'+(mid?' mid':'');d.innerHTML='<div class="sheet" role="dialog" aria-modal="true">'+inner+'</div>';
   d.addEventListener('click',function(e){if(e.target===d)closeOv()});$('#ovroot').appendChild(d);document.body.style.overflow='hidden';calcBar()}
 function closeOv(){$('#ovroot').innerHTML='';document.body.style.overflow='';calcBar()}
@@ -1194,6 +1196,7 @@ var A={
  start:function(){openStart()},
  startn:function(t){var n=t.dataset.n==='x'?parseInt($('#cnt').value,10):parseInt(t.dataset.n,10);startPick(n)},
  startmore:function(){openMore()},
+ calcx:function(){CALC={e:'',done:false};calcBar()},
  sdapply:function(){sdApply()},
  startmay:function(){openStorePick(false)},
  startocc:function(){openStorePick(true)},
