@@ -303,7 +303,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.11</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.12</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -369,7 +369,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.11';
+var APP_VERSION='4.12';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,CDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -568,8 +568,10 @@ function histList(){return S.history.filter(function(h){
   if(HY!=='todos'&&new Date(h.ts).getFullYear()!==+HY)return false;
   if(HT==='sup')return (h.store||'')===(HS==null?'':HS);
   if(HF==='junto')return true;
+  if(HF==='ocd')return !!h.occ&&!h.sd;
+  if(HF==='ocs')return !!h.occ&&!!h.sd;
   return HF==='ocasionales'?!!h.occ:(!h.occ&&(HF==='todas'||h.tag===HF))})}
-function hfLab(){if(HT==='sup')return HS?HS:'Sin supermercado';return HF==='todas'?'':HF==='junto'?'todo junto':HF==='ocasionales'?'ocasionales':HF}
+function hfLab(){if(HT==='sup')return HS?HS:'Sin supermercado';return HF==='todas'?'':HF==='junto'?'todo junto':HF==='ocasionales'?'ocasionales':HF==='ocd'?'ocasionales con detalle':HF==='ocs'?'ocasionales sin detalle':HF}
 function dateSel(h){var d=new Date(h.ts),pd=function(n){return (n<10?'0':'')+n};return '<div class="row"><span>Fecha</span><input type="date" class="inp" id="date-h" data-id="'+h.id+'" value="'+d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate())+'"></div>'}
 function storeSel(h){var ls=storeList(!!h.occ).slice();if(h.store&&ls.indexOf(h.store)<0)ls.push(h.store);return '<div class="row"><span>Supermercado</span><select class="inp" id="store-h" data-id="'+h.id+'"><option value="">Sin supermercado</option>'+ls.map(function(x){return '<option value="'+esc(x)+'"'+(h.store===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></div>'}
 function storeStats(){var m={},a=[];S.history.forEach(function(h){if(HY!=='todos'&&new Date(h.ts).getFullYear()!==+HY)return;var k=h.store||'',x=m[k];if(!x){x=m[k]={s:k,n:0,t:0};a.push(x)}x.n++;x.t+=hTotal(h)});a.sort(function(p,q){return q.t-p.t});return a}
@@ -631,8 +633,8 @@ function renderHist(){
   tabs+='<div style="margin-bottom:12px"><label class="fl" for="hy-sel" style="margin-top:0">Año</label><select class="inp" id="hy-sel"><option value="todos"'+(HY==='todos'?' selected':'')+'>Todos los años</option>'+yrs.map(function(y){return '<option value="'+y+'"'+(String(HY)===String(y)?' selected':'')+'>'+y+'</option>'}).join('')+'</select></div>';
   var chips='';
   if(HT==='mod'){
-    var tags=['junto','todas'];S.names.forEach(function(n){tags.push(n)});S.history.forEach(function(h){if(!h.occ&&tags.indexOf(h.tag)<0)tags.push(h.tag)});if(S.history.some(function(h){return h.occ})||HF==='ocasionales')tags.push('ocasionales');
-    var tl=function(t){return t==='junto'?'Todo junto':t==='todas'?'Mayorista (todas)':t==='ocasionales'?'Ocasionales':'Mayorista · '+esc(t)};
+    var tags=['junto','todas'];S.names.forEach(function(n){tags.push(n)});S.history.forEach(function(h){if(!h.occ&&tags.indexOf(h.tag)<0)tags.push(h.tag)});if(S.history.some(function(h){return h.occ})||HF==='ocasionales'||HF==='ocd'||HF==='ocs'){tags.push('ocasionales');tags.push('ocd');tags.push('ocs')}
+    var tl=function(t){return t==='junto'?'Todo junto':t==='todas'?'Mayorista (todas)':t==='ocasionales'?'Ocasionales':t==='ocd'?'Ocasionales con detalle':t==='ocs'?'Ocasionales sin detalle':'Mayorista · '+esc(t)};
     chips='<div style="margin-bottom:12px"><label class="fl" for="hf-sel" style="margin-top:0">Ver</label><select class="inp" id="hf-sel">'+tags.map(function(t){return '<option value="'+esc(t)+'"'+(HF===t?' selected':'')+'>'+tl(t)+'</option>'}).join('')+'</select></div>'}
   else if(ss.length){
     chips='<div style="margin-bottom:12px"><label class="fl" for="hs-sel" style="margin-top:0">Supermercado</label><select class="inp" id="hs-sel">'+ss.map(function(x){return '<option value="'+esc(x.s)+'"'+(HS===x.s?' selected':'')+'>'+(x.s?esc(x.s):'Sin supermercado')+'</option>'}).join('')+'</select></div>'}
@@ -648,7 +650,7 @@ function renderHist(){
   var hsum=list.reduce(function(a,h){return a+hTotal(h)},0),hgon=list.reduce(function(a,h){return a+gondTotal(h)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
   var ymin=yrs.length?Math.min.apply(null,yrs):0,ymax=yrs.length?Math.max.apply(null,yrs):0;
   var hsub=list.length+' compra'+(list.length===1?'':'s')+(yrs.length?' · '+(ymin===ymax?ymin:ymin+'–'+ymax):'')+(hfLab()?' · '+esc(hfLab()):'')+(HT==='sup'||HF==='junto'?' · '+list.reduce(function(a,h){return a+(h.sd?0:h.lines.length)},0)+' productos':'');
-  var tTxt=HT==='sup'?'Total · '+(HS?HS:'Sin supermercado'):HF==='junto'?'Total':HF==='todas'?'Total mayorista':HF==='ocasionales'?'Total ocasional':'Total mayorista · '+HF;
+  var tTxt=HT==='sup'?'Total · '+(HS?HS:'Sin supermercado'):HF==='junto'?'Total':HF==='todas'?'Total mayorista':HF==='ocasionales'?'Total ocasional':HF==='ocd'?'Total ocasional con detalle':HF==='ocs'?'Total ocasional sin detalle':'Total mayorista · '+HF;
   var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot',tTxt)+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span>'+(hgon!==hsum?'<div class="allc"><div class="row"><span>Precio de lista</span><b>'+money(hgon)+'</b></div><div class="row"><span>Pagado en caja</span><b>'+money(hsum)+'</b></div><div class="row"><span>Descuentos</span><b style="color:var(--lvg)">'+(hgon>hsum?'−':'+')+money(Math.abs(hgon-hsum))+'</b></div><small>Los descuentos de caja son la diferencia entre ambos.</small></div>':'')+'</div>';
   var gsumf=function(f){var a=S.history.filter(f);return {n:a.length,t:a.reduce(function(x,h){return x+hTotal(h)},0)}};
   var gA=gsumf(function(){return true}),gMD=gsumf(function(h){return !h.occ&&!h.sd}),gMS=gsumf(function(h){return !h.occ&&h.sd}),gOD=gsumf(function(h){return h.occ&&!h.sd}),gOS=gsumf(function(h){return h.occ&&h.sd});
