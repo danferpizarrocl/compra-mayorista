@@ -301,7 +301,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.4</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.5</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -367,8 +367,8 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.4';
-var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],HF='todas',HT='mod',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
+var APP_VERSION='4.5';
+var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,HF='todas',HT='mod',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
   var items=DEFAULT_ITEMS.map(function(n){return {id:uid(),name:n}});
@@ -643,10 +643,13 @@ function renderHist(){
   var ymin=yrs.length?Math.min.apply(null,yrs):0,ymax=yrs.length?Math.max.apply(null,yrs):0;
   var hsub=list.length+' compra'+(list.length===1?'':'s')+(yrs.length?' · '+(ymin===ymax?ymin:ymin+'–'+ymax):'')+(hfLab()?' · '+esc(hfLab()):'')+(HT==='sup'||HF==='junto'?' · '+list.reduce(function(a,h){return a+(h.sd?0:h.lines.length)},0)+' productos':'');
   var totc='<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('chart')+ttl('histtot','Total')+'</span><div class="bigv">'+money(hsum)+'</div><span class="ctx" style="margin:6px 0 0">'+hsub+'</span>'+(hgon!==hsum?'<div class="allc"><div class="row"><span>Precio de lista</span><b>'+money(hgon)+'</b></div><div class="row"><span>Pagado en caja</span><b>'+money(hsum)+'</b></div><div class="row"><span>Descuentos</span><b style="color:var(--lvg)">'+(hgon>hsum?'−':'+')+money(Math.abs(hgon-hsum))+'</b></div><small>Los descuentos de caja son la diferencia entre ambos.</small></div>':'')+'</div>';
+  var sdl=S.history.filter(function(h){return h.sd}),sdM=sdl.filter(function(h){return !h.occ}),sdO=sdl.filter(function(h){return h.occ});
+  var sum=function(a){return a.reduce(function(x,h){return x+(+h.paid||0)},0)};
+  var sdcard=sdl.length?'<div class="bigc lv-y" style="margin-bottom:12px"><span class="h2l">'+ic('cart')+ttl('histtot','Compras sin detalle')+'</span><div class="bigv">'+money(sum(sdl))+'</div><span class="ctx" style="margin:6px 0 0">'+sdl.length+' compras · mayoristas '+sdM.length+' ('+money(sum(sdM))+') · ocasionales '+sdO.length+' ('+money(sum(sdO))+')</span></div>':'';
   var supsum='';
   if(HT==='sup'){var mx=ss.reduce(function(a,x){return Math.max(a,x.t)},0)||1;
     supsum=ss.length?'<section class="card"><h2>'+ic('cart')+ttl('porsuper','Gasto por supermercado')+'</h2>'+ss.map(function(x){return '<button class="hd" data-a="stsel" data-s="'+esc(x.s)+'" style="width:100%;text-align:left;padding:9px 2px;border-bottom:1px solid var(--line);background:none;border-left:0;border-right:0;border-top:0"><span style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span><b>'+(x.s?esc(x.s):'Sin supermercado')+'</b>'+(x.s===HS?'<span class="tag">viendo</span>':'')+'<br><span class="rksub">'+x.n+(x.n===1?' compra':' compras')+'</span></span><b style="font:800 18px var(--f-display)">'+money(x.t)+'</b></span><i style="display:block;height:6px;border-radius:4px;background:var(--accent);margin-top:7px;width:'+Math.max(2,Math.round(x.t/mx*100))+'%"></i></button>'}).join('')+'</section>':'<p class="note" style="margin:0 0 12px">Aún no hay compras guardadas.</p>'}
-  $('#main').innerHTML='<div style="height:0"></div>'+tabs+totc+chips+supsum+cur+(HT==='mod'&&HF==='ocasionales'&&!list.length?'<p class="note" style="margin:0 0 12px">Aquí van tus compras ocasionales, aparte de todo lo mayorista: sus propios totales, gráficos y ranking.</p>':'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+(hfLab()?' · '+esc(hfLab()):'')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
+  $('#main').innerHTML='<div style="height:0"></div>'+tabs+totc+sdcard+chips+supsum+cur+(HT==='mod'&&HF==='ocasionales'&&!list.length?'<p class="note" style="margin:0 0 12px">Aquí van tus compras ocasionales, aparte de todo lo mayorista: sus propios totales, gráficos y ranking.</p>':'<section class="card"><h2>'+ic('chart')+ttl('evol','Evolución del gasto')+(hfLab()?' · '+esc(hfLab()):'')+'</h2><div id="chartbox">'+chartHTML()+'</div></section>'
    +'<section class="card"><h2>'+ic('cal')+ttl('anual','Total por año')+(hfLab()?' · '+esc(hfLab()):'')+'</h2>'+yearsHTML()+'</section>'
    +'<section class="card"><h2>'+ic('rank')+ttl('ranking','Ranking de productos')+(hfLab()?' · '+esc(hfLab()):'')+'</h2><div id="rkbox">'+rankBox()+'</div></section>')
    +'<section class="card"><h2>'+ic('list')+ttl('guardadas','Compras guardadas')+' · '+list.length+'</h2>'+(rows||'<p class="empty">Aún no hay compras guardadas.</p>')+'</section>';
@@ -911,6 +914,8 @@ function applyPay(sh){
   Object.keys(pm).forEach(function(id){var h=S.history.find(function(x){return x.id===id});if(h&&h.paid!==pm[id]){h.paid=pm[id];res.set++}});
   S.history.sort(function(a,b){return b.ts-a.ts});
   return res}
+function sdRows(sh){var rs=sh.rows,out=[];Object.keys(rs).map(Number).sort(function(a,b){return a-b}).forEach(function(k){if(k<2)return;var r=rs[k];var amt=typeof r.D==='number'?r.D:Number(String(r.D||'').replace(/[^0-9]/g,''));if(!amt||!r.B)return;var f=r.A,ts;if(typeof f==='number'){ts=new Date(Math.round((f-25569)*86400000)+12*3600000).getTime()}else{var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(f||''));if(!m)return;ts=new Date(+m[1],+m[2]-1,+m[3],12).getTime()}out.push({ts:ts,store:String(r.B).trim(),name:String(r.C||'').trim()||String(r.B).trim(),val:amt})});return out}
+function sdApply(){if(!SDX)return;var n=0,dup=0;SDX.forEach(function(x){if(!hasStore(true,x.store))S.stores.occ.push(x.store);var d=new Date(x.ts).toDateString();var ex=S.history.some(function(h){return h.occ&&h.sd&&new Date(h.ts).toDateString()===d&&h.store===x.store&&+h.paid===x.val});if(ex){dup++;return}S.history.push({id:uid(),name:x.name,tag:SD_TAG,store:x.store,ts:x.ts,approx:false,lines:[],budget:null,occ:true,sd:true,paid:x.val,src:'xl'});n++});S.history.sort(function(a,b){return b.ts-a.ts});save();SDX=null;closeOv();toast(n+' compras sin detalle cargadas'+(dup?' · '+dup+' ya estaban':''));render()}
 function importOcc(newItems){var n=0;XLO.forEach(function(sh,i){var p=sheetPurchase(sh);if(!p||!p.lines.length)return;var nm=sh.name.trim();if(S.history.some(function(h){return h.occ&&norm(h.name)===norm(nm)}))return;var m=sheetMeta(nm,i);S.history.push({id:uid(),name:nm,tag:'Ocasional',occ:true,ts:m.ts,approx:true,lines:p.lines,budget:null,src:'xl'});n++;
     p.lines.forEach(function(l){var k=sk(l.name);if(!newItems.some(function(it){return sk(it.name)===k}))newItems.push({id:uid(),name:l.name})})});XLO=[];if(n)S.history.sort(function(a,b){return b.ts-a.ts});return n}
 function payToast(r){var p=[];if(r.set)p.push(r.set+(r.set===1?' compra con monto de caja':' compras con monto de caja'));if(r.added)p.push(r.added+' sin detalle');if(r.upd)p.push(r.upd+(r.upd===1?' monto actualizado':' montos actualizados'));if(r.missing.length)p.push('no encontré: '+r.missing.join(', '));return p.join(' · ')}
@@ -1184,6 +1189,7 @@ var A={
  start:function(){openStart()},
  startn:function(t){var n=t.dataset.n==='x'?parseInt($('#cnt').value,10):parseInt(t.dataset.n,10);startPick(n)},
  startmore:function(){openMore()},
+ sdapply:function(){sdApply()},
  startmay:function(){openStorePick(false)},
  startocc:function(){openStorePick(true)},
  pickstore:function(t){var occ=t.dataset.o==='1',nm=storeList(occ)[parseInt(t.dataset.i,10)];if(nm)afterStore(occ,nm)},
@@ -1358,13 +1364,15 @@ document.addEventListener('change',async function(e){var t=e.target;
     var box=$('#xl-box');box.innerHTML='<p class="note">Leyendo tu Excel…</p>';
     try{XL=await readXlsx(t.files[0]);BKX=null;var bi=XL.findIndex(function(x){return x.name==='respaldo_app'});if(bi>=0){var rs=XL[bi].rows,ks=Object.keys(rs).map(Number).sort(function(a,b){return a-b}).filter(function(k){return k>1});BKX=ks.map(function(k){return rs[k].A||''}).join('');XL.splice(bi,1)}
       PAYX=null;var pi=XL.findIndex(function(x){return norm(x.name).replace(/\s+/g,'')==='pagadoencaja'});if(pi>=0){PAYX=XL[pi];XL.splice(pi,1)}
+      SDX=null;var si=XL.findIndex(function(x){return norm(x.name).replace(/\s+/g,'')==='ocasionalessindetalle'});if(si>=0){SDX=sdRows(XL[si]);XL.splice(si,1)}
+      var sbx=SDX&&SDX.length?'<div class="card" style="margin:8px 0;box-shadow:none"><b>Este Excel trae '+SDX.length+' compras ocasionales sin detalle</b><p class="note" style="margin:4px 0 0">Se agregan con su fecha, supermercado y monto. Las que ya existan no se repiten.</p><button class="btn" data-a="sdapply">Cargar sin detalle</button></div>':'';
       var isOc=function(x){return /^ocasional/.test(norm(x.name).replace(/\s+/g,''))};XLO=XL.filter(function(x){return isOc(x)&&norm(x.name).replace(/\s+/g,'')!=='ocasionales'&&sheetItems(x)});XL=XL.filter(function(x){return !isOc(x)});
       var obx=XLO.length?'<div class="card" style="margin:8px 0;box-shadow:none"><b>Este Excel trae '+XLO.length+(XLO.length===1?' compra ocasional':' compras ocasionales')+'</b><p class="note" style="margin:4px 0 0">Se cargan como compras ocasionales: van aparte y no cambian los precios de tus compras mayoristas.</p>'+(XL.length?'':'<button class="btn" data-a="payapply">Cargar ocasionales</button>')+'</div>':'';
       var pbx=PAYX?'<div class="card" style="margin:8px 0;box-shadow:none"><b>Este Excel trae «Pagado en caja»</b><p class="note" style="margin:4px 0 0">Se anota lo que pagaste en las compras que ya tienes y se agregan como «sin detalle» las que no estén.</p>'+(XL.length?'':'<button class="btn" data-a="payapply">Aplicar pagos</button>')+'</div>':'';
       var rbox=BKX?'<div class="card" style="margin:8px 0;box-shadow:none"><b>Este Excel trae un respaldo de la app</b><p class="note" style="margin:4px 0 0">Puedes recuperar todo (productos, compras guardadas y ajustes) o usar el archivo solo para cargar la lista y las compras.</p><button class="btn s" data-a="xlrestore">Restaurar todo desde el respaldo</button></div>':'';
       var def=XL.findIndex(function(s){return /oct|20\d\d/i.test(s.name)&&!/xx/i.test(s.name)&&sheetItems(s)});if(def<0)def=0;
-      if(!XL.length){box.innerHTML=(rbox+pbx+obx)||'<p class="err">Ese archivo no tiene hojas con productos.</p>';return}
-      box.innerHTML=rbox+pbx+obx+'<div class="card" style="margin:8px 0;box-shadow:none"><label class="fl" for="xl-sheet" style="margin-top:0">Hoja con la lista de productos</label><select class="inp" id="xl-sheet">'+XL.map(function(s,i){return '<option value="'+i+'"'+(i===def?' selected':'')+'>'+esc(s.name.trim())+'</option>'}).join('')+'</select>'
+      if(!XL.length){box.innerHTML=(rbox+pbx+obx+sbx)||'<p class="err">Ese archivo no tiene hojas con productos.</p>';return}
+      box.innerHTML=rbox+pbx+obx+sbx+'<div class="card" style="margin:8px 0;box-shadow:none"><label class="fl" for="xl-sheet" style="margin-top:0">Hoja con la lista de productos</label><select class="inp" id="xl-sheet">'+XL.map(function(s,i){return '<option value="'+i+'"'+(i===def?' selected':'')+'>'+esc(s.name.trim())+'</option>'}).join('')+'</select>'
        +'<button class="srow" data-a="xltog" aria-pressed="true"><span class="l">Importar compras al historial<small>Cada hoja con productos pasa a ser una compra antigua</small></span><span class="sw sw-s"></span></button><input type="checkbox" id="xl-hist" checked hidden><button class="srow" data-a="xltog" data-c="xl-upd" aria-pressed="true"><span class="l">Actualizar compras ya importadas<small>Si corregiste una hoja en tu Excel, se cambia también en el historial</small></span><span class="sw sw-s"></span></button><input type="checkbox" id="xl-upd" checked hidden>'
        +'<button class="btn" data-a="xlapply">Aplicar</button></div>'}
     catch(err){box.innerHTML='<p class="err">No pude leer ese archivo. ¿Es un .xlsx? ('+esc(err.message||err)+')</p>'}}
