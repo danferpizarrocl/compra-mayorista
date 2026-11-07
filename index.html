@@ -303,7 +303,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.8</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.9</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -369,7 +369,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.8';
+var APP_VERSION='4.9';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -570,6 +570,7 @@ function histList(){return S.history.filter(function(h){
   if(HF==='junto')return true;
   return HF==='ocasionales'?!!h.occ:(!h.occ&&(HF==='todas'||h.tag===HF))})}
 function hfLab(){if(HT==='sup')return HS?HS:'Sin supermercado';return HF==='todas'?'':HF==='junto'?'todo junto':HF==='ocasionales'?'ocasionales':HF}
+function dateSel(h){var d=new Date(h.ts),pd=function(n){return (n<10?'0':'')+n};return '<div class="row"><span>Fecha</span><input type="date" class="inp" id="date-h" data-id="'+h.id+'" value="'+d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate())+'"></div>'}
 function storeSel(h){var ls=storeList(!!h.occ).slice();if(h.store&&ls.indexOf(h.store)<0)ls.push(h.store);return '<div class="row"><span>Supermercado</span><select class="inp" id="store-h" data-id="'+h.id+'"><option value="">Sin supermercado</option>'+ls.map(function(x){return '<option value="'+esc(x)+'"'+(h.store===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></div>'}
 function storeStats(){var m={},a=[];S.history.forEach(function(h){if(HY!=='todos'&&new Date(h.ts).getFullYear()!==+HY)return;var k=h.store||'',x=m[k];if(!x){x=m[k]={s:k,n:0,t:0};a.push(x)}x.n++;x.t+=hTotal(h)});a.sort(function(p,q){return q.t-p.t});return a}
 function niceStep(max){var p=Math.pow(10,Math.floor(Math.log10(max||1))),c=[1,2,2.5,5,10];for(var i=0;i<c.length;i++){if(max/(c[i]*p)<=4)return c[i]*p}return 10*p}
@@ -640,8 +641,8 @@ function renderHist(){
   var list=histList();
   var rows=list.map(function(h){var open=hOpen===h.id,tot=hTotal(h),gd=gondTotal(h);
     var pbox=open?'<div class="paidbox">'+(h.sd?'':'<div class="row"><span>Precio de lista</span><b>'+money(gd)+'</b></div>')+'<div class="row"><span>Pagado en caja</span><input class="inp" id="paid-h" data-id="'+h.id+'" inputmode="numeric" placeholder="$ según la boleta" value="'+(h.paid>0?'$'+grp(h.paid):'')+'"></div>'+(h.sd?'':'<div class="row"><span>Descuento</span><b id="paid-d">'+discTxt(gd,h.paid)+'</b></div><small>Si lo dejas vacío, se usa el precio de lista.</small>')+'</div>':'';
-    var sbox=open?'<div class="paidbox">'+storeSel(h)+'</div>':'';
-    var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox+sbox+'<div class="acts">'+(h.sd?'<button class="btn s hb" data-a="hcomplete" data-id="'+h.id+'">Agregar productos</button>':(h.occ?'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button>':'<button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button>')+'<button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
+    var sbox=open?'<div class="paidbox">'+dateSel(h)+storeSel(h)+'</div>':'';
+    var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox+sbox+'<div class="acts">'+(h.sd?'<button class="btn s hb" data-a="hcomplete" data-id="'+h.id+'">Agregar productos</button>':(h.occ?'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button>':'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button><button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button>')+'<button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
     var diff=!h.sd&&h.xlTotal>0&&h.xlTotal!==gd?'<div class="warn">En tu Excel este total es '+money(h.xlTotal)+'</div>':'';
     return '<div class="hist"><button class="hd" data-a="hopen" data-id="'+h.id+'" aria-expanded="'+open+'"><span><b>'+esc(h.name)+'<span class="tag" style="background:transparent;border:1px solid '+tagColor(h.tag)+';color:var(--ink)">'+esc(h.tag)+'</span></b><em>'+(h.approx?fmonth(h.ts):fdate(h.ts))+' · '+(h.sd?'<span class="sdl">sin detalle</span>':h.lines.length+' productos')+(h.store?' · '+esc(h.store):'')+'</em>'+diff+'</span><span class="am" style="text-align:right">'+money(tot)+(!h.sd&&h.paid>0&&h.paid!==gd?'<br><small style="font-weight:500;color:var(--muted);font-size:11.5px">precio de lista '+money(gd)+'</small>':'')+'</span></button>'+body+'</div>'}).join('');
   var hsum=list.reduce(function(a,h){return a+hTotal(h)},0),hgon=list.reduce(function(a,h){return a+gondTotal(h)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
@@ -1300,11 +1301,11 @@ var A={
  hdelok:function(t){closeOv();var id=t.dataset.id,i=S.history.findIndex(function(h){return h.id===id}),h=S.history[i];S.history.splice(i,1);LM=AL=null;hOpen=null;CHSEL=-1;save();renderHist();toast('Compra borrada',function(){S.history.splice(i,0,h);LM=AL=null;save();renderHist()})},
  payapply:function(){if(!PAYX&&!XLO.length)return;var pr=PAYX?applyPay(PAYX):{set:0,added:0,upd:0,missing:[]};PAYX=null;var noc=importOcc(S.items);save();closeOv();render();toast([payToast(pr),noc?noc+(noc===1?' compra ocasional':' compras ocasionales'):''].filter(Boolean).join(' · ')||'No había nada que aplicar')},
  hbase:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(C()?'Reemplaza el carro actual por esta compra.':'Inicia una compra con esta lista de productos.')+'</p><button class="btn" data-a="hbaseok" data-id="'+t.dataset.id+'">Sí, usar como base</button>';b.appendChild(d)}},
- hedit:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(S.session?'Reemplaza la compra en curso por esta para editarla. Al finalizar, reemplaza la original.':'Se abre como carro ocasional. Al finalizar, reemplaza la original.')+'</p><button class="btn" data-a="heditok" data-id="'+t.dataset.id+'">Sí, editar</button>';b.appendChild(d)}},
+ hedit:function(t){var b=t.parentNode;if(!b.querySelector('.cf')){var d=document.createElement('div');d.className='cf';d.style.width='100%';d.innerHTML='<p class="err">'+(S.session?'Reemplaza la compra en curso por esta para editarla. Al finalizar, reemplaza la original.':'Se abre para editarla. Al finalizar, reemplaza la original.')+'</p><button class="btn" data-a="heditok" data-id="'+t.dataset.id+'">Sí, editar</button>';b.appendChild(d)}},
  hcomplete:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;
    S.session={carts:[newCart(S.names[0]||'Casa',{},S.budget)],active:0,multi:false,occ:!!h.occ,editId:h.id,store:h.store||''};S.demo=false;save();view='carro';render();window.scrollTo(0,0);toast('Agregando productos a «'+h.name+'»')},
  heditok:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h)return;
-   S.session={carts:[newCart(S.names[0]||'Casa',{},S.budget)],active:0,multi:false,occ:true,editId:h.id,store:h.store||''};var c=C();c.cart={};
+   S.session={carts:[newCart(h.occ?(S.names[0]||'Casa'):h.tag,{},S.budget)],active:0,multi:false,occ:!!h.occ,editId:h.id,store:h.store||''};var c=C();c.cart={};
    h.lines.forEach(function(l,i){var it=S.items.find(function(x){return canon(x.name)===canon(l.name)});if(!it){it={id:uid(),name:l.name};S.items.push(it)}c.cart[it.id]={price:l.price,boxed:false,units:(+l.units||0)*(l.boxed?(+l.boxes||1):1),boxes:1,ts:Date.now()+i}});
    S.demo=false;c.overShown=overOf(c);save();view='carro';render();window.scrollTo(0,0);toast('Editando «'+h.name+'»')},
  hbaseok:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});
@@ -1367,6 +1368,7 @@ document.addEventListener('change',async function(e){var t=e.target;
   if(t.id==='hf-sel'){HF=t.value;CHSEL=-1;renderHist();return}
   if(t.id==='hy-sel'){HY=t.value;CHSEL=-1;renderHist();return}
   if(t.id==='hs-sel'){HS=t.value;CHSEL=-1;renderHist();return}
+  if(t.id==='date-h'){var dh=S.history.find(function(x){return x.id===t.dataset.id});if(dh&&t.value){var pr=t.value.split('-');dh.ts=new Date(+pr[0],+pr[1]-1,+pr[2],12).getTime();dh.approx=false;S.history.sort(function(a,b){return b.ts-a.ts});save();var y2=window.scrollY;renderHist();window.scrollTo(0,y2);toast('Fecha actualizada')}return}
   if(t.id==='store-h'){var sh2=S.history.find(function(x){return x.id===t.dataset.id});if(sh2){if(t.value)sh2.store=t.value;else delete sh2.store;save();var y1=window.scrollY;renderHist();window.scrollTo(0,y1);toast('Supermercado actualizado')}return}
   if(t.id==='paid-s'||t.id==='paid-h'){var y0=window.scrollY;render();window.scrollTo(0,y0);return}
   if(t.classList&&t.classList.contains('sugck')){sugCount();return}
