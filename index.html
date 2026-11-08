@@ -303,7 +303,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.15</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.16</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -369,7 +369,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.15';
+var APP_VERSION='4.16';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,CDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -572,7 +572,8 @@ function histList(){return S.history.filter(function(h){
   if(HF==='ocs')return !!h.occ&&!!h.sd;
   return HF==='ocasionales'?!!h.occ:(!h.occ&&(HF==='todas'||h.tag===HF))})}
 function hfLab(){if(HT==='sup')return HS?HS:'Sin supermercado';return HF==='todas'?'':HF==='junto'?'todo junto':HF==='ocasionales'?'ocasionales':HF==='ocd'?'ocasionales con detalle':HF==='ocs'?'ocasionales sin detalle':HF}
-function labBox(h){return '<div class="paidbox" style="margin-top:10px"><b style="display:block;margin-bottom:8px">Valor de etiqueta</b><div class="row"><span>Producto</span><input class="inp" id="lab-name" maxlength="40" placeholder="Ej: Leche Prote+"></div><div class="row"><span>Precio de etiqueta</span><input class="inp" id="lab-price" inputmode="numeric" placeholder="$0"></div><div class="row"><span>Unidades por caja</span><input class="inp" id="lab-units" inputmode="numeric" placeholder="1"></div><div class="row"><span>Cajas</span><input class="inp" id="lab-boxes" inputmode="numeric" placeholder="1"></div><small>Se guarda el producto con ese precio. El pagado en caja no cambia.</small><button class="btn" data-a="labsave" data-id="'+h.id+'" style="margin-top:8px;width:100%">Guardar valor de etiqueta</button></div>'}
+function labSug(q){var el=document.getElementById('lab-sug');if(!el)return;var nq=norm(q);if(!nq){el.innerHTML='';return}var seen={},out=[];S.history.forEach(function(h){if(!h.occ)return;(h.lines||[]).forEach(function(l){var n=String(l.name||'').trim(),k=norm(n);if(!k||seen[k]||k.indexOf(nq)<0)return;seen[k]=1;out.push(n)})});out=out.slice(0,6);el.innerHTML=out.length?'<div class="list" style="margin:6px 0 10px">'+out.map(function(n){return '<button class="it" data-a="labpick" data-n="'+esc(n)+'"><span class="n">'+esc(n)+'</span></button>'}).join('')+'</div>':''}
+function labBox(h){return '<div class="paidbox" style="margin-top:10px"><b style="display:block;margin-bottom:8px">Valor de etiqueta</b><div class="row"><span>Producto</span><input class="inp" id="lab-name" maxlength="40" autocomplete="off" placeholder="Ej: Leche Prote+"></div><div id="lab-sug"></div><div class="row"><span>Precio de etiqueta</span><input class="inp" id="lab-price" inputmode="numeric" placeholder="$0"></div><div class="row"><span>Unidades por caja</span><input class="inp" id="lab-units" inputmode="numeric" placeholder="1"></div><div class="row"><span>Cajas</span><input class="inp" id="lab-boxes" inputmode="numeric" placeholder="1"></div><small>Se guarda el producto con ese precio. El pagado en caja no cambia.</small><button class="btn" data-a="labsave" data-id="'+h.id+'" style="margin-top:8px;width:100%">Guardar valor de etiqueta</button></div>'}
 function dateSel(h){var d=new Date(h.ts),pd=function(n){return (n<10?'0':'')+n};return '<div class="row"><span>Fecha</span><input type="date" class="inp" id="date-h" data-id="'+h.id+'" value="'+d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate())+'"></div>'}
 function storeSel(h){var ls=storeList(!!h.occ).slice();if(h.store&&ls.indexOf(h.store)<0)ls.push(h.store);return '<div class="row"><span>Supermercado</span><select class="inp" id="store-h" data-id="'+h.id+'"><option value="">Sin supermercado</option>'+ls.map(function(x){return '<option value="'+esc(x)+'"'+(h.store===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></div>'}
 function storeStats(){var m={},a=[];S.history.forEach(function(h){if(HY!=='todos'&&new Date(h.ts).getFullYear()!==+HY)return;var k=h.store||'',x=m[k];if(!x){x=m[k]={s:k,n:0,t:0};a.push(x)}x.n++;x.t+=hTotal(h)});a.sort(function(p,q){return q.t-p.t});return a}
@@ -1213,6 +1214,7 @@ var A={
  calcx:function(){CALC={e:'',done:false};calcBar()},
  sdapply:function(){sdApply()},
  cdapply:function(){cdApply()},
+ labpick:function(t){var i=document.getElementById('lab-name');if(i){i.value=t.dataset.n;i.focus()}var el=document.getElementById('lab-sug');if(el)el.innerHTML=''},
  labsave:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h||!h.sd)return;var nm=($('#lab-name').value||'').trim(),pr=Number(String($('#lab-price').value||'').replace(/[^0-9]/g,''))||0,un=parseInt($('#lab-units').value,10)||1,bx=parseInt($('#lab-boxes').value,10)||1;
   if(!nm){toast('Escribe el nombre del producto');return}if(pr<=0){toast('Escribe el precio de la etiqueta');return}
   var k=sk(nm);if(!S.items.some(function(it){return sk(it.name)===k}))S.items.push({id:uid(),name:nm});
@@ -1372,6 +1374,7 @@ document.addEventListener('click',function(e){var t=e.target.closest('[data-a]')
 
 /* campos */
 document.addEventListener('input',function(e){var t=e.target,id=t.id;
+  if(id==='lab-name'){labSug(t.value);return}
   if(id==='q'){Q=t.value;renderResults()}
   else if(id&&/^kg-[ab][pq]$/.test(id)&&KG){var kk=id.charAt(3);if(id.charAt(4)==='p'){var dd=num(t.value);KG[kk].p=dd?String(dd):'';t.value=dd?'$'+grp(dd):''}else{t.value=t.value.replace(/[^\d.,]/g,'');KG[kk].q=t.value}kgUpdate()}
   else if((id==='paid-s'||id==='paid-h')&&t.dataset.id){var hh=S.history.find(function(x){return x.id===t.dataset.id});if(hh){var pd=num(t.value);hh.paid=pd>0?pd:null;t.value=pd?'$'+grp(pd):'';var pe=$('#paid-d');if(pe)pe.innerHTML=discTxt(hh.sd?0:linesTotal(hh.lines),hh.paid);save()}}
