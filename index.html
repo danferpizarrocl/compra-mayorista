@@ -303,7 +303,7 @@ td.red{color:var(--bad)}
 </style>
 </head>
 <body>
-<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.14</p></div>
+<div id="splash" aria-hidden="true"><img src="icon-192.png" alt=""><h1>Mi Super</h1><p id="splash-v">Versión 4.15</p></div>
 
 <div class="wrap">
   <header class="top">
@@ -369,7 +369,7 @@ var IC={
 var ic=function(n){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+IC[n]+'</svg>'};
 
 /* ---------- estado ---------- */
-var APP_VERSION='4.14';
+var APP_VERSION='4.15';
 var S=null,view='comprar',Q='',FILTER='todos',SORT='add',hOpen=null,SH=null,XL=null,PAYX=null,EDIT=false,XLO=[],SDX=null,CDX=null,HF='todas',HT='mod',HY='todos',HS=null,PST=null,RK='dinero',RKX=false,CM='calc',KG=null,BKX=null,CHSEL=-1,AL=null,LM=null,EX={src:'',sheet:'',sel:[],names:{}};
 function newCart(name,cart,budget){return {id:uid(),name:name,cart:cart||{},budget:budget==null?500000:budget}}
 function fresh(){
@@ -572,6 +572,7 @@ function histList(){return S.history.filter(function(h){
   if(HF==='ocs')return !!h.occ&&!!h.sd;
   return HF==='ocasionales'?!!h.occ:(!h.occ&&(HF==='todas'||h.tag===HF))})}
 function hfLab(){if(HT==='sup')return HS?HS:'Sin supermercado';return HF==='todas'?'':HF==='junto'?'todo junto':HF==='ocasionales'?'ocasionales':HF==='ocd'?'ocasionales con detalle':HF==='ocs'?'ocasionales sin detalle':HF}
+function labBox(h){return '<div class="paidbox" style="margin-top:10px"><b style="display:block;margin-bottom:8px">Valor de etiqueta</b><div class="row"><span>Producto</span><input class="inp" id="lab-name" maxlength="40" placeholder="Ej: Leche Prote+"></div><div class="row"><span>Precio de etiqueta</span><input class="inp" id="lab-price" inputmode="numeric" placeholder="$0"></div><div class="row"><span>Unidades por caja</span><input class="inp" id="lab-units" inputmode="numeric" placeholder="1"></div><div class="row"><span>Cajas</span><input class="inp" id="lab-boxes" inputmode="numeric" placeholder="1"></div><small>Se guarda el producto con ese precio. El pagado en caja no cambia.</small><button class="btn" data-a="labsave" data-id="'+h.id+'" style="margin-top:8px;width:100%">Guardar valor de etiqueta</button></div>'}
 function dateSel(h){var d=new Date(h.ts),pd=function(n){return (n<10?'0':'')+n};return '<div class="row"><span>Fecha</span><input type="date" class="inp" id="date-h" data-id="'+h.id+'" value="'+d.getFullYear()+'-'+pd(d.getMonth()+1)+'-'+pd(d.getDate())+'"></div>'}
 function storeSel(h){var ls=storeList(!!h.occ).slice();if(h.store&&ls.indexOf(h.store)<0)ls.push(h.store);return '<div class="row"><span>Supermercado</span><select class="inp" id="store-h" data-id="'+h.id+'"><option value="">Sin supermercado</option>'+ls.map(function(x){return '<option value="'+esc(x)+'"'+(h.store===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></div>'}
 function storeStats(){var m={},a=[];S.history.forEach(function(h){if(HY!=='todos'&&new Date(h.ts).getFullYear()!==+HY)return;var k=h.store||'',x=m[k];if(!x){x=m[k]={s:k,n:0,t:0};a.push(x)}x.n++;x.t+=hTotal(h)});a.sort(function(p,q){return q.t-p.t});return a}
@@ -644,7 +645,7 @@ function renderHist(){
   var rows=list.map(function(h){var open=hOpen===h.id,tot=hTotal(h),gd=gondTotal(h);
     var pbox=open?'<div class="paidbox">'+(h.sd?'':'<div class="row"><span>Precio de lista</span><b>'+money(gd)+'</b></div>')+'<div class="row"><span>Pagado en caja</span><input class="inp" id="paid-h" data-id="'+h.id+'" inputmode="numeric" placeholder="$ según la boleta" value="'+(h.paid>0?'$'+grp(h.paid):'')+'"></div>'+(h.sd?'':'<div class="row"><span>Descuento</span><b id="paid-d">'+discTxt(gd,h.paid)+'</b></div><small>Si lo dejas vacío, se usa el precio de lista.</small>')+'</div>':'';
     var sbox=open?'<div class="paidbox">'+dateSel(h)+storeSel(h)+'</div>':'';
-    var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox+sbox+'<div class="acts">'+(h.sd?'<button class="btn s hb" data-a="hcomplete" data-id="'+h.id+'">Agregar productos</button>':(h.occ?'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button>':'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button><button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button>')+'<button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
+    var body=open?(h.sd?'<p class="note">Esta compra no tiene detalle de productos: solo se conoce lo que pagaste.</p>':'<div class="tw" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="r">Valor</th><th class="r">Cant</th><th class="r">Caja</th><th class="r">Total</th></tr></thead><tbody>'+h.lines.map(function(l){var c=calc(l);return '<tr><td>'+esc(l.name.trim())+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+l.units+'</td><td class="r">'+c.boxes+'</td><td class="r">'+money(c.total)+'</td></tr>'}).join('')+'</tbody></table></div>')+pbox+sbox+(h.sd?labBox(h):'')+'<div class="acts">'+(h.sd?'<button class="btn s hb" data-a="hcomplete" data-id="'+h.id+'">Agregar productos</button>':(h.occ?'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button>':'<button class="btn s hb" data-a="hedit" data-id="'+h.id+'">Editar</button><button class="btn s hb" data-a="hbase" data-id="'+h.id+'">Usar como base</button>')+'<button class="btn s" data-a="hexport" data-id="'+h.id+'">Exportar</button>')+'<button class="btn d" data-a="hdel" data-id="'+h.id+'">Borrar</button></div>':'';
     var diff=!h.sd&&h.xlTotal>0&&h.xlTotal!==gd?'<div class="warn">En tu Excel este total es '+money(h.xlTotal)+'</div>':'';
     return '<div class="hist"><button class="hd" data-a="hopen" data-id="'+h.id+'" aria-expanded="'+open+'"><span><b>'+esc(h.name)+'<span class="tag" style="background:transparent;border:1px solid '+tagColor(h.tag)+';color:var(--ink)">'+esc(h.tag)+'</span></b><em>'+(h.approx?fmonth(h.ts):fdate(h.ts))+' · '+(h.sd?'<span class="sdl">sin detalle</span>':h.lines.length+' productos')+(h.store?' · '+esc(h.store):'')+'</em>'+diff+'</span><span class="am" style="text-align:right">'+money(tot)+(!h.sd&&h.paid>0&&h.paid!==gd?'<br><small style="font-weight:500;color:var(--muted);font-size:11.5px">precio de lista '+money(gd)+'</small>':'')+'</span></button>'+body+'</div>'}).join('');
   var hsum=list.reduce(function(a,h){return a+hTotal(h)},0),hgon=list.reduce(function(a,h){return a+gondTotal(h)},0),yrs=list.map(function(h){return new Date(h.ts).getFullYear()}).filter(function(y){return y>2000});
@@ -1212,6 +1213,10 @@ var A={
  calcx:function(){CALC={e:'',done:false};calcBar()},
  sdapply:function(){sdApply()},
  cdapply:function(){cdApply()},
+ labsave:function(t){var h=S.history.find(function(x){return x.id===t.dataset.id});if(!h||!h.sd)return;var nm=($('#lab-name').value||'').trim(),pr=Number(String($('#lab-price').value||'').replace(/[^0-9]/g,''))||0,un=parseInt($('#lab-units').value,10)||1,bx=parseInt($('#lab-boxes').value,10)||1;
+  if(!nm){toast('Escribe el nombre del producto');return}if(pr<=0){toast('Escribe el precio de la etiqueta');return}
+  var k=sk(nm);if(!S.items.some(function(it){return sk(it.name)===k}))S.items.push({id:uid(),name:nm});
+  h.lines=[{name:nm,price:pr,units:un,boxes:bx,boxed:true}];h.sd=false;h.occ=true;h.tag=h.tag||'Ocasional';save();renderHist();toast('Valor de etiqueta guardado')},
  startmay:function(){openStorePick(false)},
  startocc:function(){openStorePick(true)},
  pickstore:function(t){var occ=t.dataset.o==='1',nm=storeList(occ)[parseInt(t.dataset.i,10)];if(nm)afterStore(occ,nm)},
